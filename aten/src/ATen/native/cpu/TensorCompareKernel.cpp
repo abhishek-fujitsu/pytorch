@@ -26,6 +26,9 @@
 #include <ATen/ops/result_type.h>
 #endif
 
+#if defined(CPU_CAPABILITY_SVE)
+#include <ATen/cpu/vec/sve/sve_helper.h>
+#endif
 namespace at::native { namespace {
 
 template <typename scalar_t, typename scalar_t_2 = int64_t, typename loop1d_t>
@@ -98,6 +101,86 @@ static inline void compare_base_kernel(const Tensor& result1, const Tensor& resu
       result1, result2, self, dim, keepdim, loop);
 }
 
+#if defined(CPU_CAPABILITY_SVE)
+static void min_kernel_impl(
+    const Tensor& result,
+    const Tensor& indice,
+    const Tensor& self,
+    int64_t dim,
+    bool keepdim) {
+  auto wrap_dim = maybe_wrap_dim(dim, self.dim());
+  int64_t self_dim_size = ensure_nonempty_size(self, wrap_dim);
+
+  TORCH_CHECK(result.scalar_type() == self.scalar_type() && indice.scalar_type() == kLong,
+    "Expect dtype ", self.scalar_type(), "and torch.long, but got ", result.scalar_type(), "and", indice.scalar_type());
+
+  AT_DISPATCH_ALL_TYPES_AND3(ScalarType::Half, ScalarType::BFloat16, ScalarType::Bool, self.scalar_type(), "min_cpu", [&] {
+    compare_base_kernel<scalar_t>(result, indice, self, wrap_dim, keepdim, [&] (
+      scalar_t* result_data, int64_t* indice_data,
+      const scalar_t* self_data, auto self_dim_stride) {
+        if (self.scalar_type() == ScalarType::Float && self_dim_stride == 1 &&
+	    self_dim_size <= UINT32_MAX) {
+          svfloat32_t min_number_acc = svdup_n_f32(*reinterpret_cast<const float*>(self_data));
+          svuint32_t min_index_acc = svdup_n_u32(0);
+          const svfloat32_t zero = ZERO_F32;
+	  const int64_t fraction = self_dim_size % svcnt<float>();
+	  _Pragma("unroll")
+          for (int64_t i = 0; i < self_dim_size - fraction; i += svcnt<float>()) {
+            svfloat32_t self_vec = svld1_f32(ptrue, reinterpret_cast<const float*>(self_data) + i);
+            svuint32_t vec_index = svindex_u32(i, 1);
+	    // NaN check
+            svbool_t mask = svcmpuo_f32(ptrue, self_vec, zero);
+            if (svptest_any(ptrue, mask)) {
+              *reinterpret_cast<float*>(result_data) = svminv_f32(mask, self_vec);
+              *indice_data = (int64_t)svminv_u32(mask, vec_index);
+              return;
+            }
+            mask = svcmplt_f32(ptrue, self_vec, min_number_acc);
+            min_number_acc = svsel_f32(mask, self_vec, min_number_acc);
+            min_index_acc = svsel_u32(mask, vec_index, min_index_acc);
+          }
+	  _Pragma("unroll")
+	  for (int64_t i = self_dim_size - fraction; i < self_dim_size; i += svcnt<float>()) {
+            svbool_t pg = svwhilelt_b32(i, self_dim_size);
+            svfloat32_t self_vec = svld1_f32(pg, reinterpret_cast<const float*>(self_data) + i);
+            svuint32_t vec_index = svindex_u32(i, 1);
+            // NaN check
+            svbool_t mask = svcmpuo_f32(pg, self_vec, zero);
+            if (svptest_any(pg, mask)) {
+              *reinterpret_cast<float*>(result_data) = svminv_f32(mask, self_vec);
+              *indice_data = (int64_t)svminv_u32(mask, vec_index);
+              return;
+            }
+            mask = svcmplt_f32(pg, self_vec, min_number_acc);
+            min_number_acc = svsel_f32(mask, self_vec, min_number_acc);
+            min_index_acc = svsel_u32(mask, vec_index, min_index_acc);
+          }
+          *reinterpret_cast<float*>(result_data) = svminv_f32(ptrue, min_number_acc);
+          svbool_t mask = svcmpeq_n_f32(ptrue, min_number_acc, *reinterpret_cast<float*>(result_data));
+          *indice_data = (int64_t)svminv_u32(mask, min_index_acc);
+        } else {
+	  using value_t = typename c10::scalar_value_type<scalar_t>::type;
+	  value_t (*zabs_)(scalar_t) = zabs<scalar_t, value_t>;
+	  scalar_t min_number = self_data[0];
+	  int64_t index = 0;
+          for (const auto i : c10::irange(self_dim_size)) {
+	    scalar_t value = self_data[i * self_dim_stride];
+	    if (!(zabs_(value) >= zabs_(min_number))) {
+	      min_number = value;
+	      index = i;
+	      if (_isnan<scalar_t>(value)) {
+		break;
+	      }
+	    }
+	  }
+	  *result_data = min_number;
+	  *indice_data = index;
+        }
+      }
+    );
+  });
+}
+#else
 static void min_kernel_impl(
     const Tensor& result,
     const Tensor& indice,
@@ -130,7 +213,88 @@ static void min_kernel_impl(
     );
   });
 }
+#endif // defined(CPU_CAPABILITY_SVE)
 
+#if defined(CPU_CAPABILITY_SVE)
+static void max_kernel_impl(
+    const Tensor& result,
+    const Tensor& indice,
+    const Tensor& self,
+    int64_t dim,
+    bool keepdim) {
+  auto wrap_dim = maybe_wrap_dim(dim, self.dim());
+  int64_t self_dim_size = ensure_nonempty_size(self, wrap_dim);
+
+  TORCH_CHECK(result.scalar_type() == self.scalar_type() && indice.scalar_type() == kLong,
+    "Expect dtype ", self.scalar_type(), "and torch.long, but got ", result.scalar_type(), "and", indice.scalar_type());
+
+  AT_DISPATCH_ALL_TYPES_AND3(ScalarType::Half, ScalarType::BFloat16, ScalarType::Bool, self.scalar_type(), "max_cpu", [&] {
+    compare_base_kernel<scalar_t>(result, indice, self, wrap_dim, keepdim, [&] (
+      scalar_t* result_data, int64_t* indice_data,
+      const scalar_t* self_data, auto self_dim_stride) {
+	if (self.scalar_type() == ScalarType::Float && self_dim_stride == 1 &&
+	    self_dim_size <= UINT32_MAX) {
+	  svfloat32_t max_number_acc = svdup_n_f32(*reinterpret_cast<const float*>(self_data));
+	  svuint32_t max_index_acc = svdup_n_u32(0);
+	  const svfloat32_t zero = ZERO_F32;
+	  const int64_t fraction = self_dim_size % svcnt<float>();
+          _Pragma("unroll")
+	  for (int64_t i = 0; i < self_dim_size - fraction; i += svcnt<float>()) {
+	    svfloat32_t self_vec = svld1_f32(ptrue, reinterpret_cast<const float*>(self_data) + i);
+	    svuint32_t vec_index = svindex_u32(i, 1);
+	    // NaN check
+	    svbool_t mask = svcmpuo_f32(ptrue, self_vec, zero);
+	    if (svptest_any(ptrue, mask)) {
+	      *reinterpret_cast<float*>(result_data) = svmaxv_f32(mask, self_vec);
+	      *indice_data = (int64_t)svminv_u32(mask, vec_index);
+	      return;
+	    }
+	    mask = svcmplt_f32(ptrue, max_number_acc, self_vec);
+	    max_number_acc = svsel_f32(mask, self_vec, max_number_acc);
+	    max_index_acc = svsel_u32(mask, vec_index, max_index_acc);
+	  }
+	  _Pragma("unroll")
+	  for (int64_t i = self_dim_size - fraction; i < self_dim_size; i += svcnt<float>()) {
+            svbool_t pg = svwhilelt_b32(i, self_dim_size);
+            svfloat32_t self_vec = svld1_f32(pg, reinterpret_cast<const float*>(self_data) + i);
+            svuint32_t vec_index = svindex_u32(i, 1);
+            // NaN check
+            svbool_t mask = svcmpuo_f32(pg, self_vec, zero);
+            if (svptest_any(pg, mask)) {
+              *reinterpret_cast<float*>(result_data) = svmaxv_f32(mask, self_vec);
+              *indice_data = (int64_t)svminv_u32(mask, vec_index);
+              return;
+            }
+            mask = svcmplt_f32(pg, max_number_acc, self_vec);
+            max_number_acc = svsel_f32(mask, self_vec, max_number_acc);
+            max_index_acc = svsel_u32(mask, vec_index, max_index_acc);
+          }
+	  *reinterpret_cast<float*>(result_data) = svmaxv_f32(ptrue, max_number_acc);
+	  svbool_t mask = svcmpeq_n_f32(ptrue, max_number_acc, *reinterpret_cast<float*>(result_data));
+	  *indice_data = (int64_t)svminv_u32(mask, max_index_acc);
+	} else {
+	  using value_t = typename c10::scalar_value_type<scalar_t>::type;
+	  value_t (*zabs_)(scalar_t) = zabs<scalar_t, value_t>;
+	  scalar_t max_number = self_data[0];
+	  int64_t index = 0;
+          for (const auto i : c10::irange(self_dim_size)) {
+	    scalar_t value = self_data[i * self_dim_stride];
+	    if (!(zabs_(value) <= zabs_(max_number))) {
+	      max_number = value;
+	      index = i;
+	      if (_isnan<scalar_t>(value)) {
+		break;
+	      }
+	    }
+	  }
+	  *result_data = max_number;
+	  *indice_data = index;
+	}
+      }
+    );
+  });
+}
+#else
 static void max_kernel_impl(
     const Tensor& result,
     const Tensor& indice,
@@ -163,6 +327,7 @@ static void max_kernel_impl(
     );
   });
 }
+#endif // defined(CPU_CAPABILITY_SVE)
 
 static void aminmax_kernel(
     const Tensor& self,

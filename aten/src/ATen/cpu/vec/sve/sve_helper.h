@@ -5,6 +5,30 @@
 #include <ATen/cpu/vec/vec_base.h>
 
 #if defined(CPU_CAPABILITY_SVE)
+template<typename T>
+inline uint64_t svcnt();
+template<>
+inline uint64_t svcnt<int8_t>() { return svcntb(); }
+template<>
+inline uint64_t svcnt<int16_t>() { return svcnth(); }
+template<>
+inline uint64_t svcnt<int32_t>() { return svcntw(); }
+template<>
+inline uint64_t svcnt<int64_t>() { return svcntd(); }
+template<>
+inline uint64_t svcnt<uint8_t>() { return svcntb(); }
+template<>
+inline uint64_t svcnt<uint16_t>() { return svcnth(); }
+template<>
+inline uint64_t svcnt<uint32_t>() { return svcntw(); }
+template<>
+inline uint64_t svcnt<uint64_t>() { return svcntd(); }
+template<>
+inline uint64_t svcnt<float16_t>() { return svcnth(); }
+template<>
+inline uint64_t svcnt<float>() { return svcntw(); }
+template<>
+inline uint64_t svcnt<double>() { return svcntd(); }
 
 // Define the data type of VLS(vector-length specific).
 typedef svbool_t vls_pred_t __attribute__((arm_sve_vector_bits(VECTOR_WIDTH * 8)));
