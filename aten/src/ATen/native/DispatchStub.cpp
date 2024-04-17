@@ -80,7 +80,6 @@ static CPUCapability compute_cpu_capability() {
 #endif
   }
 #endif
-<<<<<<< HEAD
 
 #ifdef HAVE_ZVECTOR_CPU_DEFINITION
   // vxe is needed for fp32 vector instructions
@@ -89,7 +88,6 @@ static CPUCapability compute_cpu_capability() {
   }
 #endif
 
-=======
 #if defined(__linux__) && defined(HAVE_SVE_CPU_DEFINITION)
   if (cpuinfo_initialize() && cpuinfo_has_arm_sve()) {
     static bool prctl_call = false; // To cache the prctl system call, so that it is called only once.
@@ -120,7 +118,7 @@ static CPUCapability compute_cpu_capability() {
     }
   }
 #endif
->>>>>>> a1df79b6c2a (Extending the Pytorch vec backend for SVE (ARM))
+
 #ifdef HAVE_VSX_CPU_DEFINITION
   return CPUCapability::VSX;
 #else
