@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <ATen/cpu/vec/intrinsics.h>
 #include <ATen/cpu/vec/vec_base.h>
 #include <ATen/cpu/vec/sve/sve_helper.h>
@@ -32,6 +33,7 @@ public:                                                                         
   Vectorized(svint##bit##_t v) : values(v) {}                                                           \
   Vectorized(int##bit##_t val) {                                                                        \
     values = svdup_n_s##bit(val);                                                                       \
+    std::cout << "vec/sve/vec_int.h/Vectorized(int" << #bit << "_t)" << std::endl;                      \
   }                                                                                                     \
   template<typename... Args,                                                                            \
            typename = std::enable_if_t<(sizeof...(Args) == size())>>                                    \
@@ -46,6 +48,7 @@ public:                                                                         
                                         const Vectorized<int##bit##_t>& b,                             \
                                         const Vectorized<int##bit##_t>& mask_) {                       \
     svbool_t mask = svcmpeq_s##bit(ptrue, mask_, ALL_S##bit##_TRUE_MASK);                               \
+    std::cout << "vec/sve/vec_int.h/blendv()" << std::endl;                                             \
     return svsel_s##bit(mask, b, a);                                                                    \
   }                                                                                                     \
   /* step sometimes requires a higher precision type (e.g., T=int, step_t=double) */                    \
@@ -55,11 +58,13 @@ public:                                                                         
     for (int64_t i = 0; i < size(); i++) {                                                              \
       buffer[i] = base + i * step;                                                                      \
     }                                                                                                   \
+    std::cout << "vec/sve/vec_int.h/arange()" << std::endl;                                             \
     return svld1_s##bit(ptrue, buffer);                                                                 \
   }                                                                                                     \
   static Vectorized<int##bit##_t> set(const Vectorized<int##bit##_t>& a,                                \
                                      const Vectorized<int##bit##_t>& b,                                \
                                      int##bit##_t count = size()) {                                    \
+    std::cout << "vec/sve/vec_int.h/set()" << std::endl;                                                \
     if (count == 0) {                                                                                   \
       return a;                                                                                         \
     } else if (count < size()) {                                                                        \
@@ -68,12 +73,14 @@ public:                                                                         
     return b;                                                                                           \
   }                                                                                                     \
   static Vectorized<int##bit##_t> loadu(const void* ptr, int64_t count = size()) {                      \
+    std::cout << "vec/sve/vec_int.h/loadu()" << std::endl;                                              \
     if (count == size())                                                                                \
       return svld1_s##bit(ptrue, reinterpret_cast<const int##bit##_t*>(ptr));                           \
     svbool_t pg = svwhilelt_b##bit(0ull, count);                                                        \
     return svld1_s##bit(pg, reinterpret_cast<const int##bit##_t*>(ptr));                                \
   }                                                                                                     \
   void store(void* ptr, int64_t count = size()) const {                                                 \
+    std::cout << "vec/sve/vec_int.h/store()" << std::endl;                                              \
     if (count == size()) {                                                                              \
       svst1_s##bit(ptrue, reinterpret_cast<int##bit##_t*>(ptr), values);                                \
     } else {                                                                                            \
@@ -84,42 +91,52 @@ public:                                                                         
   const int##bit##_t& operator[](int idx) const  = delete;                                              \
   int##bit##_t& operator[](int idx) = delete;                                                           \
   Vectorized<int##bit##_t> abs() const {                                                                \
+    std::cout << "vec/sve/vec_int.h/abs()" << std::endl;                                                \
     return svabs_s##bit##_x(ptrue, values);                                                             \
   }                                                                                                     \
   Vectorized<int##bit##_t> real() const {                                                               \
+    std::cout << "vec/sve/vec_int.h/real()" << std::endl;                                               \
     return values;                                                                                      \
   }                                                                                                     \
   Vectorized<int##bit##_t> imag() const {                                                               \
     return svdup_n_s##bit(0);                                         \
   }                                                                                                     \
   Vectorized<int##bit##_t> conj() const {                                                               \
+    std::cout << "vec/sve/vec_int.h/conj()" << std::endl;                                               \
     return values;                                                                                      \
   }                                                                                                     \
   Vectorized<int##bit##_t> frac() const;                                                                \
   Vectorized<int##bit##_t> neg() const {                                                                \
+    std::cout << "vec/sve/vec_int.h/neg()" << std::endl;                                                \
     return svneg_s##bit##_x(ptrue, values);                                                             \
   }                                                                                                     \
   Vectorized<int##bit##_t> operator==(const Vectorized<int##bit##_t>& other) const {                    \
+    std::cout << "vec/sve/vec_int.h/operator==" << std::endl;                                           \
     svbool_t mask = svcmpeq_s##bit(ptrue, values, other);                                               \
     return svsel_s##bit(mask, ALL_S##bit##_TRUE_MASK, ALL_S##bit##_FALSE_MASK);                         \
   }                                                                                                     \
   Vectorized<int##bit##_t> operator!=(const Vectorized<int##bit##_t>& other) const {                    \
+    std::cout << "vec/sve/vec_int.h/operator!=" << std::endl;                                           \
     svbool_t mask = svcmpne_s##bit(ptrue, values, other);                                               \
     return svsel_s##bit(mask, ALL_S##bit##_TRUE_MASK, ALL_S##bit##_FALSE_MASK);                         \
   }                                                                                                     \
   Vectorized<int##bit##_t> operator<(const Vectorized<int##bit##_t>& other) const {                     \
+    std::cout << "vec/sve/vec_int.h/operator<" << std::endl;                                            \
     svbool_t mask = svcmplt_s##bit(ptrue, values, other);                                               \
     return svsel_s##bit(mask, ALL_S##bit##_TRUE_MASK, ALL_S##bit##_FALSE_MASK);                         \
   }                                                                                                     \
   Vectorized<int##bit##_t> operator<=(const Vectorized<int##bit##_t>& other) const {                    \
+    std::cout << "vec/sve/vec_int.h/operator<=" << std::endl;                                           \
     svbool_t mask = svcmple_s##bit(ptrue, values, other);                                               \
     return svsel_s##bit(mask, ALL_S##bit##_TRUE_MASK, ALL_S##bit##_FALSE_MASK);                         \
   }                                                                                                     \
   Vectorized<int##bit##_t> operator>(const Vectorized<int##bit##_t>& other) const {                     \
+    std::cout << "vec/sve/vec_int.h/operator>" << std::endl;                                            \
     svbool_t mask = svcmpgt_s##bit(ptrue, values, other);                                               \
     return svsel_s##bit(mask, ALL_S##bit##_TRUE_MASK, ALL_S##bit##_FALSE_MASK);                         \
   }                                                                                                     \
   Vectorized<int##bit##_t> operator>=(const Vectorized<int##bit##_t>& other) const {                    \
+    std::cout << "vec/sve/vec_int.h/operator>=" << std::endl;                                           \
     svbool_t mask = svcmpge_s##bit(ptrue, values, other);                                               \
     return svsel_s##bit(mask, ALL_S##bit##_TRUE_MASK, ALL_S##bit##_FALSE_MASK);                         \
   }                                                                                                     \
@@ -133,79 +150,97 @@ public:                                                                         
 template <>                                                                                             \
 Vectorized<int##bit##_t> inline operator+(const Vectorized<int##bit##_t>& a,                            \
                                           const Vectorized<int##bit##_t>& b) {       \
+  std::cout << "vec/sve/vec_int.h/operator+" << std::endl;                                              \
   return svadd_s##bit##_x(ptrue, a, b);                                                                 \
 }                                                                                                       \
 template <>                                                                                             \
 Vectorized<int##bit##_t> inline operator-(const Vectorized<int##bit##_t>& a,                            \
                                          const Vectorized<int##bit##_t>& b) {                          \
+  std::cout << "vec/sve/vec_int.h/operator-" << std::endl;                                              \
   return svsub_s##bit##_x(ptrue, a, b);                                                                 \
 }                                                                                                       \
 template <>                                                                                             \
 Vectorized<int##bit##_t> inline operator*(const Vectorized<int##bit##_t>& a,                            \
                                          const Vectorized<int##bit##_t>& b) {                          \
+  std::cout << "vec/sve/vec_int.h/operator*" << std::endl;                                              \
   return svmul_s##bit##_x(ptrue, a, b);                                                                \
 }                                                                                                       \
 template <>                                                 \
 Vectorized<int##bit##_t> inline maximum(const Vectorized<int##bit##_t>& a,                              \
                                        const Vectorized<int##bit##_t>& b) {                            \
+  std::cout << "vec/sve/vec_int.h/maximum()" << std::endl;                                              \
   return svmax_s##bit##_x(ptrue, a, b);                                                                 \
 }                                                                                                       \
 template <>                                                                                             \
 Vectorized<int##bit##_t> inline minimum(const Vectorized<int##bit##_t>& a,                              \
                                        const Vectorized<int##bit##_t>& b) {                          \
+  std::cout << "vec/sve/vec_int.h/minimum()" << std::endl;                                              \
   return svmin_s##bit##_x(ptrue, a, b);                                                                 \
 }                                                                                                       \
 template <>                                                                                             \
 Vectorized<int##bit##_t> inline clamp(const Vectorized<int##bit##_t>& a,                                \
                                      const Vectorized<int##bit##_t>& min,                              \
                                      const Vectorized<int##bit##_t>& max) {                            \
+  std::cout << "vec/sve/vec_int.h/clamp()" << std::endl;                                                \
   return svmin_s##bit##_x(ptrue, max, svmax_s##bit##_x(ptrue, min, a));                                 \
 }                                                                                                       \
 template <>                                                                                             \
 Vectorized<int##bit##_t> inline clamp_max(const Vectorized<int##bit##_t>& a,                            \
                                          const Vectorized<int##bit##_t>& max) {                        \
+  std::cout << "vec/sve/vec_int.h/clamp_max()" << std::endl;                                            \
   return svmin_s##bit##_x(ptrue, max, a);                                                               \
 }                                                                                                       \
 template <>                                                                                             \
 Vectorized<int##bit##_t> inline clamp_min(const Vectorized<int##bit##_t>& a,                            \
                                          const Vectorized<int##bit##_t>& min) {                        \
+  std::cout << "vec/sve/vec_int.h/clamp_min()" << std::endl;                                            \
   return svmax_s##bit##_x(ptrue, min, a);                                                               \
 }                                                                                                       \
 template <>                                                                                             \
 Vectorized<int##bit##_t> inline operator&(const Vectorized<int##bit##_t>& a,                            \
                                          const Vectorized<int##bit##_t>& b) {                          \
+  std::cout << "vec/sve/vec_int.h/operator&" << std::endl;                                              \
   return svand_s##bit##_x(ptrue, a, b);                                                                 \
 }                                                                                                       \
 template <>                                                                                             \
 Vectorized<int##bit##_t> inline operator|(const Vectorized<int##bit##_t>& a,                            \
                                          const Vectorized<int##bit##_t>& b) {                          \
+  std::cout << "vec/sve/vec_int.h/operator|" << std::endl;                                              \
   return svorr_s##bit##_x(ptrue, a, b);                                                                 \
 }                                                                                                       \
 template <>                                                                                             \
 Vectorized<int##bit##_t> inline operator^(const Vectorized<int##bit##_t>& a,                            \
                                          const Vectorized<int##bit##_t>& b) {                          \
+  std::cout << "vec/sve/vec_int.h/operator^" << std::endl;                                              \
   return sveor_s##bit##_x(ptrue, a, b);                                                                 \
 }                                                                                                       \
 template <>                                                                                             \
 inline Vectorized<int##bit##_t> operator~(const Vectorized<int##bit##_t>& a) {                          \
+  std::cout << "vec/sve/vec_int.h/operator~" << std::endl;                                              \
   return sveor_s##bit##_x(ptrue, a, svdup_n_s##bit(-1));                                                \
 }                                                                                                       \
 Vectorized<int##bit##_t> inline Vectorized<int##bit##_t>::eq(const Vectorized<int##bit##_t>& other) const {    \
+  std::cout << "vec/sve/vec_int.h/eq()" << std::endl;                                                   \
   return (*this == other) & Vectorized<int##bit##_t>(1);                                                \
 }                                                                                                       \
 Vectorized<int##bit##_t> inline Vectorized<int##bit##_t>::ne(const Vectorized<int##bit##_t>& other) const {    \
+  std::cout << "vec/sve/vec_int.h/ne()" << std::endl;                                                   \
   return (*this != other) & Vectorized<int##bit##_t>(1);                                                \
 }                                                                                                       \
 Vectorized<int##bit##_t> inline Vectorized<int##bit##_t>::gt(const Vectorized<int##bit##_t>& other) const {    \
+  std::cout << "vec/sve/vec_int.h/gt()" << std::endl;                                                   \
   return (*this > other) & Vectorized<int##bit##_t>(1);                                                 \
 }                                                                                                       \
 Vectorized<int##bit##_t> inline Vectorized<int##bit##_t>::ge(const Vectorized<int##bit##_t>& other) const {    \
+  std::cout << "vec/sve/vec_int.h/ge()" << std::endl;                                                   \
   return (*this >= other) & Vectorized<int##bit##_t>(1);                                                \
 }                                                                                                       \
 Vectorized<int##bit##_t> inline Vectorized<int##bit##_t>::lt(const Vectorized<int##bit##_t>& other) const {    \
+  std::cout << "vec/sve/vec_int.h/lt()" << std::endl;                                                   \
   return (*this < other) & Vectorized<int##bit##_t>(1);                                                 \
 }                                                                                                       \
 Vectorized<int##bit##_t> inline Vectorized<int##bit##_t>::le(const Vectorized<int##bit##_t>& other) const {    \
+  std::cout << "vec/sve/vec_int.h/le()" << std::endl;                                                   \
   return (*this <= other) & Vectorized<int##bit##_t>(1);                                                \
 }
 
@@ -223,26 +258,31 @@ Vectorized<T> inline intdiv_nosve(const Vectorized<T>& a, const Vectorized<T>& b
   for (int i = 0; i != Vectorized<T>::size(); i++) {
     values_a[i] /= values_b[i];
   }
+  std::cout << "vec/sve/vec_int.h/intdiv_nosve()" << std::endl;
   return Vectorized<T>::loadu(values_a);
 }
 
 template <>
 Vectorized<int64_t> inline operator/(const Vectorized<int64_t>& a, const Vectorized<int64_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator/(int64_t)" << std::endl;
   return svdiv_s64_x(ptrue, a, b);
 }
 
 template <>
 Vectorized<int32_t> inline operator/(const Vectorized<int32_t>& a, const Vectorized<int32_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator/(int32_t)" << std::endl;
   return svdiv_s32_x(ptrue, a, b);
 }
 
 template <>
 Vectorized<int16_t> inline operator/(const Vectorized<int16_t>& a, const Vectorized<int16_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator/(int16_t)" << std::endl;
   return intdiv_nosve(a, b);
 }
 
 template <>
 Vectorized<int8_t> inline operator/(const Vectorized<int8_t>& a, const Vectorized<int8_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator/(int8_t)" << std::endl;
   return intdiv_nosve(a, b);
 }
 
@@ -260,6 +300,7 @@ inline void convert(const int32_t *src, int64_t *dst, int64_t n) {
     pg_64 = svwhilelt_b64(i, n);
     svst1_s64(pg_64, dst + i, svunpklo_s64(svldnt1_s32(pg_32, src + i)));
   }
+  std::cout << "vec/sve/vec_int.h/convert(const int32_t *src, int64_t *dst, int64_t n)" << std::endl;
 }
 
 template <>
@@ -281,6 +322,7 @@ inline void convert(const int64_t *src, float *dst, int64_t n) {
     svfloat32_t src_vec_f32 = svuzp1_f32(svcvt_f32_s64_x(pg_64, src_vec_s64), ZERO_F32);
     svst1_f32(pg_32, dst + i, src_vec_f32);
   }
+  std::cout << "vec/sve/vec_int.h/convert(const int64_t *src, float *dst, int64_t n)" << std::endl;
 }
 
 template <>
@@ -298,6 +340,7 @@ inline void convert(const int32_t *src, float *dst, int64_t n) {
     svint32_t src_vec = svldnt1_s32(pg, src + i);
     svst1_f32(pg, dst + i, svcvt_f32_s32_x(pg, src_vec));
   }
+  std::cout << "vec/sve/vec_int.h/convert(const int32_t *src, float *dst, int64_t n)" << std::endl;
 }
 
 template <>
@@ -321,6 +364,7 @@ inline void convert(const bool *src, int64_t *dst, int64_t n) {
     svbool_t mask = svcmpne_u64(pg_64, src_vec_u64, ZERO_U64);
     svst1_s64(pg_64, dst + i, svsel_s64(mask, ONE_S64, ZERO_S64));
   }
+  std::cout << "vec/sve/vec_int.h/convert(const bool *src, int64_t *dst, int64_t n)" << std::endl;
 }
 
 template <>
@@ -344,6 +388,7 @@ inline void convert(const bool *src, int32_t *dst, int64_t n) {
     svbool_t mask = svcmpne_u32(pg_32, src_vec_u32, ZERO_U32);
     svst1_s32(pg_32, dst + i, svsel_s32(mask, ONE_S32, ZERO_S32));
   }
+  std::cout << "vec/sve/vec_int.h/convert(const bool *src, int32_t *dst, int64_t n)" << std::endl;
 }
 
 template <>
@@ -363,45 +408,54 @@ inline void convert(const uint8_t *src, bool *dst, int64_t n) {
     svst1_u8(pg, reinterpret_cast<uint8_t*>(dst) + i,
              svsel_u8(mask, ALL_U8_TRUE_MASK, ALL_U8_FALSE_MASK));
   }
+  std::cout << "vec/sve/vec_int.h/convert(const uint8_t *src, bool *dst, int64_t n)" << std::endl;
 }
 
 template <>
 Vectorized<int64_t> inline operator<<(const Vectorized<int64_t>& a, const Vectorized<int64_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator<< (int64_t)" << std::endl;
   return svlsl_s64_x(ptrue, a, svreinterpret_u64_s64(b));
 }
 
 template <>
 Vectorized<int32_t> inline operator<<(const Vectorized<int32_t>& a, const Vectorized<int32_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator<< (int32_t)" << std::endl;
   return svlsl_s32_x(ptrue, a, svreinterpret_u32_s32(b));
 }
 
 template <>
 Vectorized<int16_t> inline operator<<(const Vectorized<int16_t>& a, const Vectorized<int16_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator<< (int16_t)" << std::endl;
   return svlsl_s16_x(ptrue, a, svreinterpret_u16_s16(b));
 }
 
 template <>
 Vectorized<int8_t> inline operator<<(const Vectorized<int8_t>& a, const Vectorized<int8_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator<< (int8_t)" << std::endl;
   return svlsl_s8_x(ptrue, a, svreinterpret_u8_s8(b));
 }
 
 template <>
 Vectorized<int64_t> inline operator>>(const Vectorized<int64_t>& a, const Vectorized<int64_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator>> (int64_t)" << std::endl;
   return svasr_s64_x(ptrue, a, svreinterpret_u64_s64(b));
 }
 
 template <>
 Vectorized<int32_t> inline operator>>(const Vectorized<int32_t>& a, const Vectorized<int32_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator>> (int32_t)" << std::endl;
   return svasr_s32_x(ptrue, a, svreinterpret_u32_s32(b));
 }
 
 template <>
 Vectorized<int16_t> inline operator>>(const Vectorized<int16_t>& a, const Vectorized<int16_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator>> (int16_t)" << std::endl;
   return svasr_s16_x(ptrue, a, svreinterpret_u16_s16(b));
 }
 
 template <>
 Vectorized<int8_t> inline operator>>(const Vectorized<int8_t>& a, const Vectorized<int8_t>& b) {
+  std::cout << "vec/sve/vec_int.h/operator>> (int8_t)" << std::endl;
   return svasr_s8_x(ptrue, a, svreinterpret_u8_s8(b));
 }
 

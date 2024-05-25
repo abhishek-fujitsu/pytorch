@@ -6,6 +6,7 @@
 #if defined(CPU_CAPABILITY_SVE)
 #include <sleef.h>
 #endif
+#include <iostream>
 
 namespace at {
 namespace vec {
@@ -48,6 +49,7 @@ public:
                               const Vectorized<float>& mask_) {
     svbool_t mask = svcmpeq_s32(ptrue, svreinterpret_s32_f32(mask_),
                                ALL_S32_TRUE_MASK);
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::blendv" << std::endl;
     return svsel_f32(mask, b, a);
   }
   template<typename step_t>
@@ -56,6 +58,7 @@ public:
     for (int64_t i = 0; i < size(); i++) {
       buffer[i] = base + i * step;
     }
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::arange" << std::endl;
     return svld1_f32(ptrue, buffer);
   }
   static Vectorized<float> set(const Vectorized<float>& a, const Vectorized<float>& b,
@@ -63,6 +66,7 @@ public:
     if (count == 0) {
       return a;
     } else if (count < size()) {
+      std::cout << "vec/sve/vec_float.h/Vectorized<float>::set" << std::endl;
       return svsel_f32(svwhilelt_b32(0ull, count), b, a);
     }
     return b;
@@ -71,6 +75,7 @@ public:
     if (count == size())
       return svld1_f32(ptrue, reinterpret_cast<const float*>(ptr));
     svbool_t pg = svwhilelt_b32(0ull, count);
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::loadu(const void* ptr, int64_t count)" << std::endl;
     return svld1_f32(pg, reinterpret_cast<const float*>(ptr));
   }
   void store(void* ptr, int64_t count = size()) const {
@@ -80,6 +85,7 @@ public:
       svbool_t pg = svwhilelt_b32(0ull, count);
       svst1_f32(pg, reinterpret_cast<float*>(ptr), values);
     }
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::store" << std::endl;
   }
   const float& operator[](int idx) const  = delete;
   float& operator[](int idx) = delete;
@@ -95,14 +101,17 @@ public:
     for (int64_t i = 0; i < size(); ++i) {
       if (mask_array[i]) mask |= (1ull << i);
     }
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::zero_mask" << std::endl;
     return mask;
   }
   Vectorized<float> isnan() const {
     // NaN check
     svbool_t mask = svcmpuo_f32(ptrue, values, ZERO_F32);
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::isnan" << std::endl;
     return svsel_f32(mask, ALL_F32_TRUE_MASK, ALL_F32_FALSE_MASK);
   }
   bool has_inf_nan() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::has_inf_nan" << std::endl;
     return svptest_any(ptrue, svcmpuo_f32(ptrue, svsub_f32_x(ptrue, values, values), ZERO_F32));
   }
   Vectorized<float> map(float (*f)(float)) const {
@@ -111,9 +120,11 @@ public:
     for (int64_t i = 0; i < size(); ++i) {
       tmp[i] = f(tmp[i]);
     }
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::map" << std::endl;
     return loadu(tmp);
   }
   Vectorized<float> abs() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::abs" << std::endl;
     return svabs_f32_x(ptrue, values);
   }
   Vectorized<float> angle() const {
@@ -124,72 +135,95 @@ public:
     const auto neg_mask = svcmplt_f32(ptrue, values, ZERO_F32);
     auto angle = svsel_f32(neg_mask, pi, ZERO_F32);
     angle = svsel_f32(nan_mask, nan_vec, angle);
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::angle" << std::endl;
     return angle;
   }
   Vectorized<float> real() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::real" << std::endl;
     return values;
   }
   Vectorized<float> imag() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::imag" << std::endl;
     return Vectorized<float>(0.f);
   }
   Vectorized<float> conj() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::conj" << std::endl;
     return values;
   }
   Vectorized<float> acos() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::acos" << std::endl;
     return Vectorized<float>(Sleef_acosfx_u10sve(values));
   }
   Vectorized<float> acosh() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::acosh" << std::endl;
     return Vectorized<float>(Sleef_acoshfx_u10sve(values));
   }
   Vectorized<float> asin() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::asin" << std::endl;
     return Vectorized<float>(Sleef_asinfx_u10sve(values));
   }
   Vectorized<float> atan() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::atan" << std::endl;
     return Vectorized<float>(Sleef_atanfx_u10sve(values));
   }
   Vectorized<float> atanh() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::atanh" << std::endl;
     return Vectorized<float>(Sleef_atanhfx_u10sve(values));
   }
   Vectorized<float> atan2(const Vectorized<float> &b) const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::atan2" << std::endl;
     return Vectorized<float>(Sleef_atan2fx_u10sve(values, b));
   }
   Vectorized<float> copysign(const Vectorized<float> &sign) const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::copysign" << std::endl;
     return Vectorized<float>(Sleef_copysignfx_sve(values, sign));
   }
   Vectorized<float> erf() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::erf" << std::endl;
     return Vectorized<float>(Sleef_erffx_u10sve(values));
   }
   Vectorized<float> erfc() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::erfc" << std::endl;
     return Vectorized<float>(Sleef_erfcfx_u15sve(values));
   }
   Vectorized<float> erfinv() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::erfinv" << std::endl;
     return map(calc_erfinv);
   }
   Vectorized<float> exp() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::exp" << std::endl;
     return Vectorized<float>(Sleef_expfx_u10sve(values));
   }
   Vectorized<float> exp2() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::exp2" << std::endl;
     return Vectorized<float>(Sleef_exp2fx_u10sve(values));
   }
   Vectorized<float> expm1() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::expm1" << std::endl;
     return Vectorized<float>(Sleef_expm1fx_u10sve(values));
   }
   Vectorized<float> exp_u20() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::exp_u20" << std::endl;
     return exp();
   }
   Vectorized<float> fmod(const Vectorized<float>& q) const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::fmod" << std::endl;
     return Vectorized<float>(Sleef_fmodfx_sve(values, q));
   }
   Vectorized<float> hypot(const Vectorized<float> &b) const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::hypot" << std::endl;
     return Vectorized<float>(Sleef_hypotfx_u05sve(values, b));
   }
   Vectorized<float> i0() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::i0" << std::endl;
     return map(calc_i0);
   }
   Vectorized<float> i0e() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::i0e" << std::endl;
     return map(calc_i0e);
   }
   Vectorized<float> digamma() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::digamma" << std::endl;
     return map(calc_digamma);
   }
   Vectorized<float> igamma(const Vectorized<float> &x) const {
@@ -200,6 +234,7 @@ public:
     for (int64_t i = 0; i < size(); i++) {
       tmp[i] = calc_igamma(tmp[i], tmp_x[i]);
     }
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::igamma" << std::endl;
     return loadu(tmp);
   }
   Vectorized<float> igammac(const Vectorized<float> &x) const {
@@ -210,70 +245,92 @@ public:
     for (int64_t i = 0; i < size(); i++) {
       tmp[i] = calc_igammac(tmp[i], tmp_x[i]);
     }
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::igammac" << std::endl;
     return loadu(tmp);
   }
   Vectorized<float> nextafter(const Vectorized<float> &b) const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::nextafter" << std::endl;
     return Vectorized<float>(Sleef_nextafterfx_sve(values, b));
   }
   Vectorized<float> log() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::log" << std::endl;
     return Vectorized<float>(Sleef_logfx_u10sve(values));
   }
   Vectorized<float> log2() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::log2" << std::endl;
     return Vectorized<float>(Sleef_log2fx_u10sve(values));
   }
   Vectorized<float> log10() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::log10" << std::endl;
     return Vectorized<float>(Sleef_log10fx_u10sve(values));
   }
   Vectorized<float> log1p() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::log1p" << std::endl;
     return Vectorized<float>(Sleef_log1pfx_u10sve(values));
   }
   Vectorized<float> frac() const;
   Vectorized<float> sin() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::sin" << std::endl;
     return Vectorized<float>(Sleef_sinfx_u10sve(values));
   }
   Vectorized<float> sinh() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::sinh" << std::endl;
     return Vectorized<float>(Sleef_sinhfx_u10sve(values));
   }
   Vectorized<float> cos() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::cos" << std::endl;
     return Vectorized<float>(Sleef_cosfx_u10sve(values));
   }
   Vectorized<float> cosh() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::cosh" << std::endl;
     return Vectorized<float>(Sleef_coshfx_u10sve(values));
   }
   Vectorized<float> ceil() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::ceil" << std::endl;
     return svrintp_f32_x(ptrue, values);
   }
   Vectorized<float> floor() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::floor" << std::endl;
     return svrintm_f32_x(ptrue, values);
   }
   Vectorized<float> neg() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::neg" << std::endl;
     return svneg_f32_x(ptrue, values);
   }
   Vectorized<float> round() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::round" << std::endl;
     return svrinti_f32_x(ptrue, values);
   }
   Vectorized<float> tan() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::tan" << std::endl;
     return Vectorized<float>(Sleef_tanfx_u10sve(values));
   }
   Vectorized<float> tanh() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::tanh" << std::endl;
     return Vectorized<float>(Sleef_tanhfx_u10sve(values));
   }
   Vectorized<float> trunc() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::trunc" << std::endl;
     return svrintz_f32_x(ptrue, values);
   }
   Vectorized<float> lgamma() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::lgamma" << std::endl;
     return Vectorized<float>(Sleef_lgammafx_u10sve(values));
   }
   Vectorized<float> sqrt() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::sqrt" << std::endl;
     return svsqrt_f32_x(ptrue, values);
   }
   Vectorized<float> reciprocal() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::reciprocal" << std::endl;
     return svdivr_f32_x(ptrue, values, ONE_F32);
   }
   Vectorized<float> rsqrt() const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::rsqrt" << std::endl;
     return svdivr_f32_x(ptrue, svsqrt_f32_x(ptrue, values), ONE_F32);
   }
   Vectorized<float> pow(const Vectorized<float> &b) const {
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::pow" << std::endl;
     return Vectorized<float>(Sleef_powfx_u10sve(values, b));
   }
   // Comparison using the _CMP_**_OQ predicate.
@@ -281,31 +338,37 @@ public:
   //   `Q`: do not raise if an operand is NaN
   Vectorized<float> operator==(const Vectorized<float>& other) const {
     svbool_t mask = svcmpeq_f32(ptrue, values, other);
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::operator==" << std::endl;
     return svsel_f32(mask, ALL_F32_TRUE_MASK, ALL_F32_FALSE_MASK);
   }
 
   Vectorized<float> operator!=(const Vectorized<float>& other) const {
     svbool_t mask = svcmpne_f32(ptrue, values, other);
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::operator!=" << std::endl;
     return svsel_f32(mask, ALL_F32_TRUE_MASK, ALL_F32_FALSE_MASK);
   }
 
   Vectorized<float> operator<(const Vectorized<float>& other) const {
     svbool_t mask = svcmplt_f32(ptrue, values, other);
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::operator<" << std::endl;
     return svsel_f32(mask, ALL_F32_TRUE_MASK, ALL_F32_FALSE_MASK);
   }
 
   Vectorized<float> operator<=(const Vectorized<float>& other) const {
     svbool_t mask = svcmple_f32(ptrue, values, other);
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::operator<=" << std::endl;
     return svsel_f32(mask, ALL_F32_TRUE_MASK, ALL_F32_FALSE_MASK);
   }
 
   Vectorized<float> operator>(const Vectorized<float>& other) const {
     svbool_t mask = svcmpgt_f32(ptrue, values, other);
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::operator>" << std::endl;
     return svsel_f32(mask, ALL_F32_TRUE_MASK, ALL_F32_FALSE_MASK);
   }
 
   Vectorized<float> operator>=(const Vectorized<float>& other) const {
     svbool_t mask = svcmpge_f32(ptrue, values, other);
+    std::cout << "vec/sve/vec_float.h/Vectorized<float>::operator>=" << std::endl;
     return svsel_f32(mask, ALL_F32_TRUE_MASK, ALL_F32_FALSE_MASK);
   }
 
@@ -319,26 +382,31 @@ public:
 
 template <>
 Vectorized<float> inline operator+(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_float.h/operator+" << std::endl;
   return svadd_f32_x(ptrue, a, b);
 }
 
 template <>
 Vectorized<float> inline operator-(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_float.h/operator-" << std::endl;
   return svsub_f32_x(ptrue, a, b);
 }
 
 template <>
 Vectorized<float> inline operator*(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_float.h/operator*" << std::endl;
   return svmul_f32_x(ptrue, a, b);
 }
 
 template <>
 Vectorized<float> inline operator/(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_float.h/operator/" << std::endl;
   return svdiv_f32_x(ptrue, a, b);
 }
 
 // frac. Implement this here so we can use subtraction
 Vectorized<float> inline Vectorized<float>::frac() const {
+  std::cout << "vec/sve/vec_float.h/Vectorized<float>::frac" << std::endl;
   return *this - this->trunc();
 }
 
@@ -346,6 +414,7 @@ Vectorized<float> inline Vectorized<float>::frac() const {
 // either input is a NaN.
 template <>
 Vectorized<float> inline maximum(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_float.h/maximum" << std::endl;
   return svmax_f32_x(ptrue, a, b);
 }
 
@@ -353,60 +422,73 @@ Vectorized<float> inline maximum(const Vectorized<float>& a, const Vectorized<fl
 // either input is a NaN.
 template <>
 Vectorized<float> inline minimum(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_float.h/minimum" << std::endl;
   return svmin_f32_x(ptrue, a, b);
 }
 
 template <>
 Vectorized<float> inline clamp(const Vectorized<float>& a, const Vectorized<float>& min, const Vectorized<float>& max) {
+  std::cout << "vec/sve/vec_float.h/clamp" << std::endl;
   return svmin_f32_x(ptrue, max, svmax_f32_x(ptrue, min, a));
 }
 
 template <>
 Vectorized<float> inline clamp_max(const Vectorized<float>& a, const Vectorized<float>& max) {
+  std::cout << "vec/sve/vec_float.h/clamp_max" << std::endl;
   return svmin_f32_x(ptrue, max, a);
 }
 
 template <>
 Vectorized<float> inline clamp_min(const Vectorized<float>& a, const Vectorized<float>& min) {
+  std::cout << "vec/sve/vec_float.h/clamp_min" << std::endl;
   return svmax_f32_x(ptrue, min, a);
 }
 
 template <>
 Vectorized<float> inline operator&(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_float.h/operator&" << std::endl;
   return svreinterpret_f32_s32(svand_s32_x(ptrue, svreinterpret_s32_f32(a), svreinterpret_s32_f32(b)));
 }
 
 template <>
 Vectorized<float> inline operator|(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_float.h/operator|" << std::endl;
   return svreinterpret_f32_s32(svorr_s32_x(ptrue, svreinterpret_s32_f32(a), svreinterpret_s32_f32(b)));
 }
 
 template <>
 Vectorized<float> inline operator^(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_float.h/operator^" << std::endl;
   return svreinterpret_f32_s32(sveor_s32_x(ptrue, svreinterpret_s32_f32(a), svreinterpret_s32_f32(b)));
 }
 
 Vectorized<float> inline Vectorized<float>::eq(const Vectorized<float>& other) const {
+  std::cout << "vec/sve/vec_float.h/Vectorized<float>::eq" << std::endl;
   return (*this == other) & Vectorized<float>(1.0f);
 }
 
 Vectorized<float> inline Vectorized<float>::ne(const Vectorized<float>& other) const {
+  std::cout << "vec/sve/vec_float.h/Vectorized<float>::ne" << std::endl;
   return (*this != other) & Vectorized<float>(1.0f);
 }
 
 Vectorized<float> inline Vectorized<float>::gt(const Vectorized<float>& other) const {
+  std::cout << "vec/sve/vec_float.h/Vectorized<float>::gt" << std::endl;
   return (*this > other) & Vectorized<float>(1.0f);
 }
 
 Vectorized<float> inline Vectorized<float>::ge(const Vectorized<float>& other) const {
+  std::cout << "vec/sve/vec_float.h/Vectorized<float>::ge" << std::endl;
   return (*this >= other) & Vectorized<float>(1.0f);
 }
 
 Vectorized<float> inline Vectorized<float>::lt(const Vectorized<float>& other) const {
+  std::cout << "vec/sve/vec_float.h/Vectorized<float>::lt" << std::endl;
   return (*this < other) & Vectorized<float>(1.0f);
 }
 
 Vectorized<float> inline Vectorized<float>::le(const Vectorized<float>& other) const {
+  std::cout << "vec/sve/vec_float.h/Vectorized<float>::le" << std::endl;
   return (*this <= other) & Vectorized<float>(1.0f);
 }
 
@@ -422,6 +504,7 @@ inline void convert(const float* src, float* dst, int64_t n) {
     svbool_t pg = svwhilelt_b32(i, n);
     svst1_f32(pg, dst + i, svldnt1_f32(pg, src + i));
   }
+  std::cout << "vec/sve/vec_float.h/convert(const float* src, float* dst, int64_t n)" << std::endl;
 }
 
 template <>
@@ -443,6 +526,7 @@ inline void convert(const float *src, at::Half *dst, int64_t n) {
                                      ZERO_F16);
     svst1_f16(pg_16, reinterpret_cast<float16_t*>(dst) + i, src_vec);
   }
+  std::cout << "vec/sve/vec_float.h/convert(const float *src, at::Half *dst, int64_t n)" << std::endl;
 }
 
 template <>
@@ -464,6 +548,7 @@ inline void convert(const at::Half *src, float *dst, int64_t n) {
                                      ZERO_F16);
     svst1_f32(pg_32, dst + i, svcvt_f32_f16_x(ptrue, src_vec));
   }
+  std::cout << "vec/sve/vec_float.h/convert(const at::Half *src, float *dst, int64_t n)" << std::endl;
 }
 
 template <>
@@ -487,10 +572,12 @@ inline void convert(const bool *src, float *dst, int64_t n) {
     svbool_t mask = svcmpne_u32(pg_32, src_vec_u32, ZERO_U32);
     svst1_f32(pg_32, dst + i, svsel_f32(mask, ONE_F32, ZERO_F32));
   }
+  std::cout << "vec/sve/vec_float.h/convert(const bool *src, float *dst, int64_t n)" << std::endl;
 }
 
 template <>
 Vectorized<float> inline fmadd(const Vectorized<float>& a, const Vectorized<float>& b, const Vectorized<float>& c) {
+  std::cout << "vec/sve/vec_float.h/fmadd" << std::endl;
   return svmad_f32_x(ptrue, a, b, c);
 }
 

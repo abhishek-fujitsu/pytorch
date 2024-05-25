@@ -3,6 +3,7 @@
 // DO NOT DEFINE STATIC DATA IN THIS HEADER!
 // See Note [Do not compile initializers with SVE]
 
+#include <iostream>
 #include <ATen/cpu/vec/intrinsics.h>
 
 #include <ATen/cpu/vec/vec_base.h>
@@ -33,21 +34,25 @@ inline namespace CPU_CAPABILITY {
 
 template<>
 inline Vectorized<float> cast<float, double>(const Vectorized<double>& src) {
+  std::cout << "vec/sve/vec_common_sve.h/cast<float, double>()" << std::endl;
   return svreinterpret_f32_f64(src);
 }
 
 template<>
 inline Vectorized<double> cast<double, float>(const Vectorized<float>& src) {
+  std::cout << "vec/sve/vec_common_sve.h/cast<double, float>()" << std::endl;
   return svreinterpret_f64_f32(src);
 }
 
 #define DEFINE_FLOAT_INT_CAST(int_t, int_bit, float_t, float_bit)                \
 template<>                                                                       \
 inline  Vectorized<int_t> cast<int_t, float_t>(const Vectorized<float_t>& src) { \
+  std::cout << "vec/sve/vec_common_sve.h/cast<int bit, float bit>()" << std::endl; \
   return svreinterpret_s##int_bit##_f##float_bit(src);                           \
 }                                                                                \
 template<>                                                                       \
 inline Vectorized<float_t> cast<float_t, int_t>(const Vectorized<int_t>& src) {  \
+  std::cout << "vec/sve/vec_common_sve.h/cast<float bit , int bit>()" << std::endl; \
   return svreinterpret_f##float_bit##_s##int_bit(src);                           \
 }
 
@@ -63,6 +68,7 @@ DEFINE_FLOAT_INT_CAST(int16_t, 16, float, 32)
 template<int64_t scale = 1>
 std::enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<double>>
 inline gather(const double* base_addr, const Vectorized<int64_t>& vindex_) {
+  std::cout << "vec/sve/vec_common_sve.h/gather<double>()" << std::endl;
   svint64_t vindex = svasrd_n_s64_x(ptrue, svmul_s64_x(ptrue, vindex_, svdup_n_s64(scale)), 3);
   return svld1_gather_s64index_f64(ptrue, base_addr, vindex);
 }
@@ -70,6 +76,7 @@ inline gather(const double* base_addr, const Vectorized<int64_t>& vindex_) {
 template<int64_t scale = 1>
 std::enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<float>>
 inline gather(const float* base_addr, const Vectorized<int32_t>& vindex_) {
+  std::cout << "vec/sve/vec_common_sve.h/gather<float>()" << std::endl;
   svint32_t vindex = svasrd_n_s32_x(ptrue, svmul_s32_x(ptrue, vindex_, svdup_n_s32(scale)), 2);
   return svld1_gather_s32index_f32(ptrue, base_addr, vindex);
 }
@@ -80,6 +87,7 @@ template<int64_t scale = 1>
 std::enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<double>>
 inline mask_gather(const Vectorized<double>& src, const double* base_addr,
                    const Vectorized<int64_t>& vindex_, const Vectorized<double>& mask_) {
+  std::cout << "vec/sve/vec_common_sve.h/mask_gather<double>()" << std::endl;
   svbool_t mask = svcmpeq_s64(ptrue, svreinterpret_s64_f64(mask_),
                               ALL_S64_TRUE_MASK);
   svint64_t vindex = svasrd_n_s64_x(ptrue, svmul_s64_x(ptrue, vindex_, svdup_n_s64(scale)), 3);
@@ -90,6 +98,7 @@ template<int64_t scale = 1>
 std::enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<float>>
 inline mask_gather(const Vectorized<float>& src, const float* base_addr,
                    const Vectorized<int32_t>& vindex_, const Vectorized<float>& mask_) {
+  std::cout << "vec/sve/vec_common_sve.h/mask_gather<float>()" << std::endl;
   svbool_t mask = svcmpeq_s32(ptrue, svreinterpret_s32_f32(mask_),
                               ALL_S32_TRUE_MASK);
   svint32_t vindex = svasrd_n_s32_x(ptrue, svmul_s32_x(ptrue, vindex_, svdup_n_s32(scale)), 2);
@@ -103,6 +112,7 @@ inline mask_gather(const Vectorized<float>& src, const float* base_addr,
 template<>
 Vectorized<int64_t>
 inline convert_to_int_of_same_size<double>(const Vectorized<double> &src) {
+  std::cout << "vec/sve/vec_common_sve.h/convert_to_int_of_same_size<double>()" << std::endl;
   svfloat64_t x = svadd_f64_x(ptrue, src, svdup_n_f64(0x0018000000000000));
   return svsub_s64_x(ptrue,
                      svreinterpret_s64_f64(x),
@@ -112,6 +122,7 @@ inline convert_to_int_of_same_size<double>(const Vectorized<double> &src) {
 template<>
 Vectorized<int32_t>
 inline convert_to_int_of_same_size<float>(const Vectorized<float> &src) {
+  std::cout << "vec/sve/vec_common_sve.h/convert_to_int_of_same_size<float>()" << std::endl;
   return svcvt_s32_f32_x(ptrue, src);
 }
 
@@ -120,6 +131,7 @@ inline convert_to_int_of_same_size<float>(const Vectorized<float> &src) {
 template <>
 std::pair<Vectorized<double>, Vectorized<double>>
 inline interleave2<double>(const Vectorized<double>& a, const Vectorized<double>& b) {
+  std::cout << "vec/sve/vec_common_sve.h/interleave2<double>()" << std::endl;
   // inputs:
   //   a = {a0, a1, a3, a3}
   //   b = {b0, b1, b2, b3}
@@ -133,6 +145,7 @@ inline interleave2<double>(const Vectorized<double>& a, const Vectorized<double>
 template <>
 std::pair<Vectorized<float>, Vectorized<float>>
 inline interleave2<float>(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_common_sve.h/interleave2<float>()" << std::endl;
   // inputs:
   //   a = {a0, a1, a2, a3, a4, a5, a6, a7}
   //   b = {b0, b1, b2, b3, b4, b5, b6, b7}
@@ -148,6 +161,7 @@ inline interleave2<float>(const Vectorized<float>& a, const Vectorized<float>& b
 template <>
 std::pair<Vectorized<double>, Vectorized<double>>
 inline deinterleave2<double>(const Vectorized<double>& a, const Vectorized<double>& b) {
+  std::cout << "vec/sve/vec_common_sve.h/deinterleave2<double>()" << std::endl;
   // inputs:
   //   a = {a0, b0, a1, b1}
   //   b = {a2, b2, a3, b3}
@@ -161,6 +175,7 @@ inline deinterleave2<double>(const Vectorized<double>& a, const Vectorized<doubl
 template <>
 std::pair<Vectorized<float>, Vectorized<float>>
 inline deinterleave2<float>(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/sve/vec_common_sve.h/deinterleave2<float>()" << std::endl;
   // inputs:
   //   a = {a0, b0, a1, b1, a2, b2, a3, b3}
   //   b = {a4, b4, a5, b5, a6, b6, a7, b7}
