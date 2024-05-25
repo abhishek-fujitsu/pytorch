@@ -4,6 +4,7 @@
 // See Note [Do not compile initializers with AVX]
 
 #include <ATen/cpu/vec/vec.h>
+#include <iostream>
 
 namespace at::vec {
 
@@ -23,11 +24,13 @@ inline std::tuple<Vectorized<float>, Vectorized<float>> convert_to_float(const V
 
 template <>
 inline std::tuple<Vectorized<float>, Vectorized<float>> convert_to_float<BFloat16> (const Vectorized<BFloat16>& a) {
+  std::cout << "vec/functional_bflaot16.h/convert_to_float<BFloat16>()" << std::endl;
   return convert_bfloat16_float(a);
 }
 
 template <>
 inline std::tuple<Vectorized<float>, Vectorized<float>> convert_to_float<Half> (const Vectorized<Half>& a) {
+  std::cout << "vec/functional_bflaot16.h/convert_to_float<Half>()" << std::endl;
     return convert_half_float(a);
 }
 
@@ -37,11 +40,13 @@ inline Vectorized<scalar_t> convert_from_float(const Vectorized<float>&, const V
 
 template <>
 inline Vectorized<BFloat16> convert_from_float<BFloat16>(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/functional_bflaot16.h/convert_from_float<BFloat16>()" << std::endl;
   return convert_float_bfloat16(a, b);
 }
 
 template <>
 inline Vectorized<Half> convert_from_float<Half>(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/functional_bflaot16.h/convert_from_float<Half>()" << std::endl;
   return convert_float_half(a, b);
 }
 
@@ -51,11 +56,13 @@ inline void load_to_float(const scalar_t *data, Vectorized<float> &out1, Vectori
 
 template <>
 inline void load_to_float<BFloat16> (const BFloat16 *data, Vectorized<float> &out1, Vectorized<float> &out2) {
+  std::cout << "vec/functional_bflaot16.h/load_to_float<BFloat16>()" << std::endl;
   load_fp32_from_bf16(data, out1, out2);
 }
 
 template <>
 inline void load_to_float<Half> (const Half *data, Vectorized<float> &out1, Vectorized<float> &out2) {
+  std::cout << "vec/functional_bflaot16.h/load_to_float<Half>()" << std::endl;
   load_fp32_from_fp16(data, out1, out2);
 }
 
@@ -65,11 +72,13 @@ inline void load_to_float(const scalar_t *data, Vectorized<float> &out);
 
 template <>
 inline void load_to_float<BFloat16> (const BFloat16 *data, Vectorized<float> &out) {
+  std::cout << "vec/functional_bflaot16.h/load_to_float<BFloat16>()" << std::endl;
   load_fp32_from_bf16(data, out);
 }
 
 template <>
 inline void load_to_float<Half> (const Half *data, Vectorized<float> &out) {
+  std::cout << "vec/functional_bflaot16.h/load_to_float<Half>()" << std::endl;
   load_fp32_from_fp16(data, out);
 }
 
@@ -98,6 +107,7 @@ inline void load_to_float<Half> (const Half *data, Vectorized<float> &out) {
 template <typename scalar_t, typename Op,
           typename std::enable_if_t<is_reduced_floating_point_v<scalar_t>, int> = 0>
 inline float reduce_all(const Op& vec_fun, const scalar_t* data, int64_t size) {
+  std::cout << "vec/functional_bflaot16.h/reduce_all()" << std::endl;
   using bVec = vec::Vectorized<scalar_t>;
   using fVec = vec::Vectorized<float>;
   if (size < bVec::size()) {
@@ -137,6 +147,7 @@ template <typename scalar_t, typename Op1, typename Op2,
           typename std::enable_if_t<is_reduced_floating_point_v<scalar_t>, int> = 0>
 inline std::pair<float, float> reduce2_all(const Op1& vec_fun1, const Op2& vec_fun2,
     const scalar_t* data, int64_t size) {
+  std::cout << "vec/functional_bflaot16.h/reduce2_all()" << std::endl;
   using bVec = vec::Vectorized<scalar_t>;
   using fVec = vec::Vectorized<float>;
   if (size < bVec::size()) {
@@ -193,6 +204,7 @@ inline float map_reduce_all(
     const ReduceOp& red_fun,
     const scalar_t* data,
     int64_t size) {
+  std::cout << "vec/functional_bflaot16.h/map_reduce_all()" << std::endl;
   using bVec = vec::Vectorized<scalar_t>;
   using fVec = vec::Vectorized<float>;
   if (size < bVec::size()) {
@@ -246,6 +258,7 @@ inline float map2_reduce_all(
     const scalar_t* data,
     const scalar_t* data2,
     int64_t size) {
+  std::cout << "vec/functional_bflaot16.h/map2_reduce_all()" << std::endl;
   using bVec = vec::Vectorized<scalar_t>;
   using fVec = vec::Vectorized<float>;
   if (size < bVec::size()) {
@@ -308,6 +321,7 @@ inline float map3_reduce_all(
     const scalar_t* data2,
     const scalar_t* data3,
     int64_t size) {
+  std::cout << "vec/functional_bflaot16.h/map3_reduce_all()" << std::endl;
   using bVec = vec::Vectorized<scalar_t>;
   using fVec = vec::Vectorized<float>;
   if (size < bVec::size()) {
@@ -376,6 +390,7 @@ inline void map(
     scalar_t* output_data,
     const scalar_t* input_data,
     int64_t size) {
+  std::cout << "vec/functional_bflaot16.h/map()" << std::endl;
   using bVec = vec::Vectorized<scalar_t>;
   using fVec = vec::Vectorized<float>;
   int64_t d = 0;
@@ -404,6 +419,7 @@ inline void map(
     scalar_t* output_data,
     const float* input_data,
     int64_t size) {
+  std::cout << "vec/functional_bflaot16.h/map()" << std::endl;
   using bVec = vec::Vectorized<scalar_t>;
   using fVec = vec::Vectorized<float>;
   int64_t d = 0;
@@ -440,6 +456,7 @@ inline void map2(
     const scalar_t* input_data,
     const scalar_t* input_data2,
     int64_t size) {
+  std::cout << "vec/functional_bflaot16.h/map2()" << std::endl;
   using bVec = vec::Vectorized<scalar_t>;
   using fVec = vec::Vectorized<float>;
   int64_t d = 0;
@@ -474,6 +491,7 @@ inline void map3(
     const scalar_t* input_data2,
     const scalar_t* input_data3,
     int64_t size) {
+  std::cout << "vec/functional_bflaot16.h/map3()" << std::endl;
   using bVec = vec::Vectorized<scalar_t>;
   using fVec = vec::Vectorized<float>;
   int64_t d = 0;
@@ -513,6 +531,7 @@ inline void map4(
     const scalar_t* input_data3,
     const scalar_t* input_data4,
     int64_t size) {
+  std::cout << "vec/functional_bflaot16.h/map4()" << std::endl;
   using bVec = vec::Vectorized<scalar_t>;
   using fVec = vec::Vectorized<float>;
   int64_t d = 0;

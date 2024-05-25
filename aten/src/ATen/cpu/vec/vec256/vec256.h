@@ -4,6 +4,7 @@
 // See Note [Do not compile initializers with AVX]
 
 #include <ATen/cpu/vec/intrinsics.h>
+#include <iostream>
 
 #include <ATen/cpu/vec/vec_base.h>
 #if !(defined(__VSX__)  || defined(CPU_CAPABILITY_VSX) || defined(CPU_CAPABILITY_ZVECTOR))
@@ -45,20 +46,24 @@ namespace at::vec {
 inline namespace CPU_CAPABILITY {
 
 inline std::ostream& operator<<(std::ostream& stream, const c10::qint32& val) {
+  std::cout << "vec/vec256/vec256.h/operator<<()" << std::endl;
   stream << val.val_;
   return stream;
 }
 inline std::ostream& operator<<(std::ostream& stream, const c10::qint8& val) {
+  std::cout << "vec/vec256/vec256.h/operator<<()" << std::endl;
   stream << static_cast<int>(val.val_);
   return stream;
 }
 inline std::ostream& operator<<(std::ostream& stream, const c10::quint8& val) {
+  std::cout << "vec/vec256/vec256.h/operator<<()" << std::endl;
   stream << static_cast<unsigned int>(val.val_);
   return stream;
 }
 
 template <typename T>
 std::ostream& operator<<(std::ostream& stream, const Vectorized<T>& vec) {
+  std::cout << "vec/vec256/vec256.h/operator<<()" << std::endl;
   T buf[Vectorized<T>::size()];
   vec.store(buf);
   stream << "vec[";
@@ -79,21 +84,25 @@ std::ostream& operator<<(std::ostream& stream, const Vectorized<T>& vec) {
 
 template<>
 inline Vectorized<float> cast<float, double>(const Vectorized<double>& src) {
+  std::cout << "vec/vec256/vec256.h/cast()" << std::endl;
   return _mm256_castpd_ps(src);
 }
 
 template<>
 inline Vectorized<double> cast<double, float>(const Vectorized<float>& src) {
+  std::cout << "vec/vec256/vec256.h/cast()" << std::endl;
   return _mm256_castps_pd(src);
 }
 
 template<>
 inline Vectorized<float> cast<float, int32_t>(const Vectorized<int32_t>& src) {
+  std::cout << "vec/vec256/vec256.h/cast()" << std::endl;
   return _mm256_castsi256_ps(src);
 }
 
 template<>
 inline Vectorized<double> cast<double, int64_t>(const Vectorized<int64_t>& src) {
+  std::cout << "vec/vec256/vec256.h/cast()" << std::endl;
   return _mm256_castsi256_pd(src);
 }
 
@@ -103,12 +112,14 @@ inline Vectorized<double> cast<double, int64_t>(const Vectorized<int64_t>& src) 
 template<int64_t scale = 1>
 std::enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<double>>
 inline gather(const double* base_addr, const Vectorized<int64_t>& vindex) {
+  std::cout << "vec/vec256/vec256.h/gather()" << std::endl;
   return _mm256_i64gather_pd(base_addr, vindex, scale);
 }
 
 template<int64_t scale = 1>
 std::enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<float>>
 inline gather(const float* base_addr, const Vectorized<int32_t>& vindex) {
+  std::cout << "vec/vec256/vec256.h/gather()" << std::endl;
   return _mm256_i32gather_ps(base_addr, vindex, scale);
 }
 #endif
@@ -119,6 +130,7 @@ template<int64_t scale = 1>
 std::enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<double>>
 inline mask_gather(const Vectorized<double>& src, const double* base_addr,
                    const Vectorized<int64_t>& vindex, Vectorized<double>& mask) {
+  std::cout << "vec/vec256/vec256.h/mask_gather()" << std::endl;
   return _mm256_mask_i64gather_pd(src, base_addr, vindex, mask, scale);
 }
 
@@ -126,6 +138,7 @@ template<int64_t scale = 1>
 std::enable_if_t<scale == 1 || scale == 2 || scale == 4 || scale == 8, Vectorized<float>>
 inline mask_gather(const Vectorized<float>& src, const float* base_addr,
                    const Vectorized<int32_t>& vindex, Vectorized<float>& mask) {
+  std::cout << "vec/vec256/vec256.h/mask_gather()" << std::endl;
   return _mm256_mask_i32gather_ps(src, base_addr, vindex, mask, scale);
 }
 #endif
@@ -136,6 +149,7 @@ inline mask_gather(const Vectorized<float>& src, const float* base_addr,
 template<>
 Vectorized<int64_t>
 inline convert_to_int_of_same_size<double>(const Vectorized<double> &src) {
+  std::cout << "vec/vec256/vec256.h/convert_to_int_of_same_size()" << std::endl;
   auto x = _mm256_add_pd(src, _mm256_set1_pd(0x0018000000000000));
   return _mm256_sub_epi64(
       _mm256_castpd_si256(x),
@@ -146,6 +160,7 @@ inline convert_to_int_of_same_size<double>(const Vectorized<double> &src) {
 template<>
 Vectorized<int32_t>
 inline convert_to_int_of_same_size<float>(const Vectorized<float> &src) {
+  std::cout << "vec/vec256/vec256.h/convert_to_int_of_same_size()" << std::endl;
   return _mm256_cvttps_epi32(src);
 }
 
@@ -154,6 +169,7 @@ inline convert_to_int_of_same_size<float>(const Vectorized<float> &src) {
 template<>
 Vectorized<double>
 inline convert_to_fp_of_same_size<double>(const Vectorized<int64_t> &src) {
+  std::cout << "vec/vec256/vec256.h/convert_to_fp_of_same_size()" << std::endl;
   auto x = _mm256_add_epi64(src, _mm256_castpd_si256(_mm256_set1_pd(0x0018000000000000)));
   return _mm256_sub_pd(
     _mm256_castsi256_pd(x),
@@ -164,6 +180,7 @@ inline convert_to_fp_of_same_size<double>(const Vectorized<int64_t> &src) {
 template<>
 Vectorized<float>
 inline convert_to_fp_of_same_size<float>(const Vectorized<int32_t> &src) {
+  std::cout << "vec/vec256/vec256.h/convert_to_fp_of_same_size()" << std::endl;
   return _mm256_cvtepi32_ps(src);
 }
 
@@ -172,6 +189,7 @@ inline convert_to_fp_of_same_size<float>(const Vectorized<int32_t> &src) {
 template <>
 std::pair<Vectorized<double>, Vectorized<double>>
 inline interleave2<double>(const Vectorized<double>& a, const Vectorized<double>& b) {
+  std::cout << "vec/vec256/vec256.h/interleave2()" << std::endl;
   // inputs:
   //   a = {a0, a1, a3, a3}
   //   b = {b0, b1, b2, b3}
@@ -192,6 +210,7 @@ inline interleave2<double>(const Vectorized<double>& a, const Vectorized<double>
 template <>
 std::pair<Vectorized<float>, Vectorized<float>>
 inline interleave2<float>(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256.h/interleave2()" << std::endl;
   // inputs:
   //   a = {a0, a1, a2, a3, a4, a5, a6, a7}
   //   b = {b0, b1, b2, b3, b4, b5, b6, b7}
@@ -216,6 +235,7 @@ inline interleave2<float>(const Vectorized<float>& a, const Vectorized<float>& b
 template <>
 std::pair<Vectorized<double>, Vectorized<double>>
 inline deinterleave2<double>(const Vectorized<double>& a, const Vectorized<double>& b) {
+  std::cout << "vec/vec256/vec256.h/deinterleave2()" << std::endl;
   // inputs:
   //   a = {a0, b0, a1, b1}
   //   b = {a2, b2, a3, b3}
@@ -236,6 +256,7 @@ inline deinterleave2<double>(const Vectorized<double>& a, const Vectorized<doubl
 template <>
 std::pair<Vectorized<float>, Vectorized<float>>
 inline deinterleave2<float>(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256.h/deinterleave2()" << std::endl;
   // inputs:
   //   a = {a0, b0, a1, b1, a2, b2, a3, b3}
   //   b = {a4, b4, a5, b5, a6, b6, a7, b7}
@@ -259,28 +280,33 @@ inline deinterleave2<float>(const Vectorized<float>& a, const Vectorized<float>&
 
 template<>
 inline Vectorized<float> flip(const Vectorized<float> & v) {
+  std::cout << "vec/vec256/vec256.h/flip()" << std::endl;
   const __m256i mask_float = _mm256_set_epi32(0, 1, 2, 3, 4, 5, 6, 7);
   return _mm256_permutevar8x32_ps(v, mask_float);
 }
 
 template<>
 inline Vectorized<double> flip(const Vectorized<double> & v) {
+  std::cout << "vec/vec256/vec256.h/flip()" << std::endl;
   return _mm256_permute4x64_pd(v, 27);  // 27 == _MM_SHUFFLE(0, 1, 2, 3)
 }
 
 template<>
 inline Vectorized<int64_t> flip(const Vectorized<int64_t> & v) {
+  std::cout << "vec/vec256/vec256.h/flip()" << std::endl;
   return _mm256_permute4x64_epi64(v, 27);  // 27 == _MM_SHUFFLE(0, 1, 2, 3)
 }
 
 template<>
 inline Vectorized<int32_t> flip(const Vectorized<int32_t> & v) {
+  std::cout << "vec/vec256/vec256.h/flip()" << std::endl;
   const __m256i mask_int32 = _mm256_set_epi32(0, 1, 2, 3, 4, 5, 6, 7);
   return _mm256_permutevar8x32_epi32(v, mask_int32);
 }
 
 template<>
 inline Vectorized<int16_t> flip(const Vectorized<int16_t> & v) {
+  std::cout << "vec/vec256/vec256.h/flip()" << std::endl;
   const __m256i mask = _mm256_set_epi8(
     1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14,
     1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14
@@ -290,6 +316,7 @@ inline Vectorized<int16_t> flip(const Vectorized<int16_t> & v) {
 }
 
 inline __m256i flip8(const __m256i & v) {
+  std::cout << "vec/vec256/vec256.h/flip8()" << std::endl;
   const __m256i mask_int8 = _mm256_set_epi8(
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
@@ -300,11 +327,13 @@ inline __m256i flip8(const __m256i & v) {
 
 template<>
 inline Vectorized<int8_t> flip(const Vectorized<int8_t> & v) {
+  std::cout << "vec/vec256/vec256.h/flip()" << std::endl;
   return flip8(v);
 }
 
 template<>
 inline Vectorized<uint8_t> flip(const Vectorized<uint8_t> & v) {
+  std::cout << "vec/vec256/vec256.h/flip()" << std::endl;
   return flip8(v);
 }
 

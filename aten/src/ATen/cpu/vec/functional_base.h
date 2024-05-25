@@ -5,6 +5,7 @@
 
 #include <ATen/cpu/vec/vec.h>
 #include <c10/util/irange.h>
+#include <iostream>
 
 namespace at::vec {
 
@@ -14,6 +15,7 @@ inline scalar_t vec_reduce_all(
     const Op& vec_fun,
     vec::Vectorized<scalar_t> acc_vec,
     int64_t size) {
+  std::cout << "vec/functional_base.h/vec_reduce_all()" << std::endl;
   using Vec = vec::Vectorized<scalar_t>;
   scalar_t acc_arr[Vec::size()];
   acc_vec.store(acc_arr);
@@ -30,6 +32,7 @@ inline scalar_t vec_reduce_all(
 template <typename scalar_t, typename Op>
 struct VecReduceAllSIMD {
   static inline scalar_t apply(const Op& vec_fun, const Vectorized<scalar_t>& acc_vec) {
+    std::cout << "vec/functional_base.h/VecReduceAllSIMD::apply()" << std::endl;
     return vec_reduce_all(vec_fun, acc_vec, Vectorized<scalar_t>::size());
   }
 };
@@ -39,6 +42,7 @@ struct VecReduceAllSIMD {
 template <typename Op>
 struct VecReduceAllSIMD<float, Op> {
   static inline float apply(const Op& vec_fun, const Vectorized<float>& acc_vec) {
+    std::cout << "vec/functional_base.h/VecReduceAllSIMD<float, Op>::apply() [AVX2]" << std::endl;
     using Vec = Vectorized<float>;
     Vec v = acc_vec;
     // 128-bit shuffle
@@ -58,6 +62,7 @@ struct VecReduceAllSIMD<float, Op> {
 template <typename Op>
 struct VecReduceAllSIMD<float, Op> {
   static inline float apply(const Op& vec_fun, const Vectorized<float>& acc_vec) {
+    std::cout << "vec/functional_base.h/VecReduceAllSIMD<float, Op>::apply() [AVX512]" << std::endl;
     using Vec = Vectorized<float>;
     Vec v = acc_vec;
     // 256-bit shuffle
@@ -82,6 +87,7 @@ struct VecReduceAllSIMD<float, Op> {
 template <typename Op>
 struct VecReduceAllSIMD<float, Op> {
   static inline float apply(const Op& vec_fun, const Vectorized<float>& acc_vec) {
+    std::cout << "vec/functional_base.h/VecReduceAllSIMD<float, Op>::apply() [AARCH64]" << std::endl;
     using Vec = Vectorized<float>;
     Vec v = acc_vec;
 
@@ -109,12 +115,14 @@ struct VecReduceAllSIMD<float, Op> {
 
 template <typename scalar_t, typename Op>
 inline scalar_t vec_reduce_all(const Op& vec_fun, const Vectorized<scalar_t>& acc_vec) {
+  std::cout << "vec/functional_base.h/vec_reduce_all()" << std::endl;
   return VecReduceAllSIMD<scalar_t, Op>::apply(vec_fun, acc_vec);
 }
 
 template <typename scalar_t, typename Op,
           typename std::enable_if_t<!is_reduced_floating_point_v<scalar_t>, int> = 0>
 inline scalar_t reduce_all(const Op& vec_fun, const scalar_t* data, int64_t size) {
+  std::cout << "vec/functional_base.h/reduce_all()" << std::endl;
   using Vec = vec::Vectorized<scalar_t>;
   if (size < Vec::size())
     return vec_reduce_all(vec_fun, Vec::loadu(data, size), size);
@@ -136,6 +144,7 @@ template <typename scalar_t, typename Op1, typename Op2,
           typename std::enable_if_t<!is_reduced_floating_point_v<scalar_t>, int> = 0>
 inline std::pair<scalar_t, scalar_t> reduce2_all(const Op1& vec_fun1, const Op2& vec_fun2,
     const scalar_t* data, int64_t size) {
+  std::cout << "vec/functional_base.h/reduce2_all()" << std::endl;
   using Vec = vec::Vectorized<scalar_t>;
   if (size < Vec::size()) {
     auto loaded_data = Vec::loadu(data, size);
@@ -168,6 +177,7 @@ inline scalar_t map_reduce_all(
     const ReduceOp& red_fun,
     const scalar_t* data,
     int64_t size) {
+  std::cout << "vec/functional_base.h/map_reduce_all()" << std::endl;
   using Vec = vec::Vectorized<scalar_t>;
   if (size < Vec::size())
     return vec_reduce_all(red_fun, map_fun(Vec::loadu(data, size)), size);
@@ -194,6 +204,7 @@ inline scalar_t map2_reduce_all(
     const scalar_t* data,
     const scalar_t* data2,
     int64_t size) {
+  std::cout << "vec/functional_base.h/map2_reduce_all()" << std::endl;
   using Vec = vec::Vectorized<scalar_t>;
   if (size < Vec::size()) {
     Vec data_vec = Vec::loadu(data, size);
@@ -227,6 +238,7 @@ inline scalar_t map3_reduce_all(
     const scalar_t* data2,
     const scalar_t* data3,
     int64_t size) {
+  std::cout << "vec/functional_base.h/map3_reduce_all()" << std::endl;
   using Vec = vec::Vectorized<scalar_t>;
   if (size < Vec::size()) {
     Vec data_vec = Vec::loadu(data, size);
@@ -262,6 +274,7 @@ inline void map(
     scalar_t* output_data,
     const scalar_t* input_data,
     int64_t size) {
+  std::cout << "vec/functional_base.h/map()" << std::endl;
   using Vec = vec::Vectorized<scalar_t>;
   int64_t d = 0;
   for (; d < size - (size % Vec::size()); d += Vec::size()) {
@@ -282,6 +295,7 @@ inline void map2(
     const scalar_t* input_data,
     const scalar_t* input_data2,
     int64_t size) {
+  std::cout << "vec/functional_base.h/map2()" << std::endl;
   using Vec = vec::Vectorized<scalar_t>;
   int64_t d = 0;
   for (; d < size - (size % Vec::size()); d += Vec::size()) {
@@ -307,6 +321,7 @@ inline void map3(
     const scalar_t* input_data2,
     const scalar_t* input_data3,
     int64_t size) {
+  std::cout << "vec/functional_base.h/map3()" << std::endl;
   using Vec = vec::Vectorized<scalar_t>;
   int64_t d = 0;
   for (; d < size - (size % Vec::size()); d += Vec::size()) {
@@ -335,6 +350,7 @@ inline void map4(
     const scalar_t* input_data3,
     const scalar_t* input_data4,
     int64_t size) {
+  std::cout << "vec/functional_base.h/map4()" << std::endl;
   using Vec = vec::Vectorized<scalar_t>;
   int64_t d = 0;
   for (; d < size - (size % Vec::size()); d += Vec::size()) {
