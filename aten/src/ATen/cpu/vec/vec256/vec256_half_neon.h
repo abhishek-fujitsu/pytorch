@@ -8,6 +8,7 @@
 #include <ATen/cpu/vec/vec_base.h>
 #include <c10/util/Half.h>
 #include <c10/util/irange.h>
+#include <iostream>
 
 namespace at::vec {
 // See Note [CPU_CAPABILITY namespace]
@@ -42,6 +43,7 @@ struct BlendHalfRegs<index, true> {
       const float16x8_t& a,
       const float16x8_t& b,
       float16x8_t& res) {
+    std::cout << "vec/vec256/vec256_half_neon.h/BlendHalfRegs<index, true>::impl()" << std::endl;
     return vsetq_lane_f16(vgetq_lane_f16(b, index), res, index);
   }
 };
@@ -52,6 +54,7 @@ struct BlendHalfRegs<index, false> {
       const float16x8_t& a,
       const float16x8_t& b,
       float16x8_t& res) {
+    std::cout << "vec/vec256/vec256_half_neon.h/BlendHalfRegs<index, false>::impl()" << std::endl;
     return vsetq_lane_f16(vgetq_lane_f16(a, index), res, index);
   }
 };
@@ -77,6 +80,7 @@ class Vectorized<c10::Half> {
   Vectorized<c10::Half> map2(
       const Vectorized<c10::Half>& second,
       c10::Half (*const f)(c10::Half, c10::Half)) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::map2()" << std::endl;
     __at_align__ c10::Half tmp_first[size()];
     __at_align__ c10::Half tmp_second[size()];
     store(tmp_first); // store this to tmp_first
@@ -89,6 +93,7 @@ class Vectorized<c10::Half> {
 
   Vectorized<c10::Half> map_with_vec_float_method(
       Vectorized<float> (Vectorized<float>::*m)() const) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::map_with_vec_float_method()" << std::endl;
     // Convert low float16x8_t to 2 float32x4_t variables, apply m, and convert
     // back
     float32x4_t v00 = vcvt_f32_f16(vget_low_f16(values.val[0]));
@@ -114,6 +119,7 @@ class Vectorized<c10::Half> {
       const Vectorized<c10::Half>& second,
       Vectorized<float> (Vectorized<float>::*m)(const Vectorized<float>&)
           const) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::map2_with_vec_float_method()" << std::endl;
     // Convert low float16x8_t to 2 float32x4_t variables, apply m, and convert
     // back
     float32x4_t v00 = vcvt_f32_f16(vget_low_f16(values.val[0]));
@@ -188,12 +194,14 @@ class Vectorized<c10::Half> {
             val15} {}
   Vectorized(float16x8_t val0, float16x8_t val1) : values{val0, val1} {}
   operator float16x8x2_t() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::operator float16x8x2_t()" << std::endl;
     return values;
   }
   template <int64_t mask>
   static Vectorized<c10::Half> blend(
       const Vectorized<c10::Half>& a,
       const Vectorized<c10::Half>& b) {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::blend()" << std::endl;
     Vectorized<c10::Half> vec;
     // 0.
     vec.values.val[0] = BlendHalfRegs<0, (mask & 0x01) != 0>::impl(
@@ -239,6 +247,7 @@ class Vectorized<c10::Half> {
       const Vectorized<c10::Half>& a,
       const Vectorized<c10::Half>& b,
       const Vectorized<c10::Half>& mask) {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::blendv()" << std::endl;
     // Note: using blendv is very awkward because 0xFFFF is one of many NaN's in
     // FP16 It's unfortunate that the mask has type Half (required from
     // vec_base)
@@ -263,6 +272,7 @@ class Vectorized<c10::Half> {
   static Vectorized<c10::Half> arange(
       c10::Half base = 0.0,
       step_t step = static_cast<step_t>(1)) {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::arange()" << std::endl;
     const Vectorized<c10::Half> base_vec(base);
     const Vectorized<c10::Half> step_vec(step);
     const Vectorized<c10::Half> step_sizes(
@@ -273,6 +283,7 @@ class Vectorized<c10::Half> {
       const Vectorized<c10::Half>& a,
       const Vectorized<c10::Half>& b,
       int64_t count = size()) {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::set()" << std::endl;
     uint16_t pre_mask[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     for (int i = 0; i < count; i++) {
       pre_mask[i] = 0xFFFF;
@@ -293,6 +304,7 @@ class Vectorized<c10::Half> {
     return vec;
   }
   static Vectorized<c10::Half> loadu(const void* ptr, int64_t count = size()) {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::loadu()" << std::endl;
     if (count == size()) {
       return vld1q_f16_x2(reinterpret_cast<const float16_t*>(ptr));
     } else if (count == (size() >> 1)) {
@@ -312,6 +324,7 @@ class Vectorized<c10::Half> {
     return vld1q_f16_x2(reinterpret_cast<const float16_t*>(tmp_values));
   }
   void store(void* ptr, int64_t count = size()) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::store()" << std::endl;
     if (count == size()) {
       vst1q_f16_x2(reinterpret_cast<float16_t*>(ptr), values);
       return;
@@ -324,15 +337,19 @@ class Vectorized<c10::Half> {
     }
   }
   inline const float16x8_t& get_low() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::get_low()" << std::endl;
     return values.val[0];
   }
   inline float16x8_t& get_low() {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::get_low()" << std::endl;
     return values.val[0];
   }
   inline const float16x8_t& get_high() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::get_high()" << std::endl;
     return values.val[1];
   }
   inline float16x8_t& get_high() {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::get_high()" << std::endl;
     return values.val[1];
   }
   // Very slow implementation of indexing.
@@ -340,11 +357,13 @@ class Vectorized<c10::Half> {
   // Once we specialize that implementation for ARM
   // this should be removed. TODO (kimishpatel)
   c10::Half operator[](int idx) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::operator[]() const" << std::endl;
     __at_align__ c10::Half tmp[size()];
     store(tmp);
     return tmp[idx];
   }
   c10::Half operator[](int idx) {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::operator[]()" << std::endl;
     __at_align__ c10::Half tmp[size()];
     store(tmp);
     return tmp[idx];
@@ -352,6 +371,7 @@ class Vectorized<c10::Half> {
   // For boolean version where we want to if any 1/all zero
   // etc. can be done faster in a different way.
   int zero_mask() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::zero_mask()" << std::endl;
     __at_align__ c10::Half tmp[size()];
     store(tmp);
     int mask = 0;
@@ -363,6 +383,7 @@ class Vectorized<c10::Half> {
     return mask;
   }
   Vectorized<c10::Half> isnan() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::isnan()" << std::endl;
     __at_align__ c10::Half tmp[size()];
     __at_align__ c10::Half res[size()];
     store(tmp);
@@ -376,6 +397,7 @@ class Vectorized<c10::Half> {
     return loadu(res);
   };
   bool has_inf_nan() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::has_inf_nan()" << std::endl;
     __at_align__ c10::Half tmp[size()];
     store(tmp);
     for (const auto i : c10::irange(size())) {
@@ -386,6 +408,7 @@ class Vectorized<c10::Half> {
     return false;
   }
   Vectorized<c10::Half> map(c10::Half (*const f)(c10::Half)) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::map()" << std::endl;
     __at_align__ c10::Half tmp[size()];
     store(tmp);
     for (const auto i : c10::irange(size())) {
@@ -394,22 +417,27 @@ class Vectorized<c10::Half> {
     return loadu(tmp);
   }
   Vectorized<c10::Half> abs() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::abs()" << std::endl;
     return Vectorized<c10::Half>(
         vabsq_f16(values.val[0]), vabsq_f16(values.val[1]));
   }
   Vectorized<c10::Half> angle() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::angle()" << std::endl;
     auto zero = Vectorized<c10::Half>(0);
     auto pi = Vectorized<c10::Half>(c10::pi<c10::Half>);
     auto tmp = blendv(zero, pi, *this < zero);
     return blendv(tmp, *this, isnan());
   }
   Vectorized<c10::Half> real() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::real()" << std::endl;
     return *this;
   }
   Vectorized<c10::Half> imag() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::imag()" << std::endl;
     return Vectorized<c10::Half>(0);
   }
   Vectorized<c10::Half> conj() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::conj()" << std::endl;
     return *this;
   }
 
@@ -417,145 +445,188 @@ class Vectorized<c10::Half> {
   // converting to FP32, applying the math function, and then converting back to
   // FP16.
   Vectorized<c10::Half> acos() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::acos()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::acos);
   }
   Vectorized<c10::Half> acosh() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::acosh()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::acosh);
   }
   Vectorized<c10::Half> asin() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::asin()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::asin);
   }
   Vectorized<c10::Half> atan() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::atan()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::atan);
   }
   Vectorized<c10::Half> atanh() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::atanh()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::atanh);
   }
   Vectorized<c10::Half> atan2(const Vectorized<c10::Half>& exp) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::atan2()" << std::endl;
     return map2_with_vec_float_method(exp, &Vectorized<float>::atan2);
   }
   Vectorized<c10::Half> copysign(const Vectorized<c10::Half>& sign) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::copysign()" << std::endl;
     return map2_with_vec_float_method(sign, &Vectorized<float>::copysign);
   }
   Vectorized<c10::Half> erf() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::erf()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::erf);
   }
   Vectorized<c10::Half> erfc() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::erfc()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::erfc);
   }
   Vectorized<c10::Half> erfinv() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::erfinv()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::erfinv);
   }
   Vectorized<c10::Half> exp() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::exp()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::exp);
   }
   Vectorized<c10::Half> exp2() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::exp2()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::exp2);
   }
   Vectorized<c10::Half> expm1() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::expm1()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::expm1);
   }
   Vectorized<c10::Half> exp_u20() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::exp_u20()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::exp_u20);
   }
   Vectorized<c10::Half> fmod(const Vectorized<c10::Half>& q) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::fmod()" << std::endl;
     // This function is questionable with a conversion, so we use map2
     return map2(q, std::fmod);
   }
   Vectorized<c10::Half> hypot(const Vectorized<c10::Half>& b) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::hypot()" << std::endl;
     return map2_with_vec_float_method(b, &Vectorized<float>::hypot);
   }
   Vectorized<c10::Half> i0() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::i0()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::i0);
   }
   Vectorized<c10::Half> i0e() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::i0e()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::i0e);
   }
   Vectorized<c10::Half> digamma() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::digamma()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::digamma);
   }
   Vectorized<c10::Half> igamma(const Vectorized<c10::Half>& x) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::igamma()" << std::endl;
     return map2_with_vec_float_method(x, &Vectorized<float>::igamma);
   }
   Vectorized<c10::Half> igammac(const Vectorized<c10::Half>& x) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::igammac()" << std::endl;
     return map2_with_vec_float_method(x, &Vectorized<float>::igammac);
   }
   Vectorized<c10::Half> log() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::log()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::log);
   }
   Vectorized<c10::Half> log10() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::log10()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::log10);
   }
   Vectorized<c10::Half> log1p() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::log1p()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::log1p);
   }
   Vectorized<c10::Half> log2() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::log2()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::log2);
   }
   Vectorized<c10::Half> nextafter(const Vectorized<c10::Half>& b) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::nextafter()" << std::endl;
     // This function does not make sense with conversion, so we use map2
     return map2(b, std::nextafter);
   }
   Vectorized<c10::Half> frac() const;
   Vectorized<c10::Half> sin() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::sin()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::sin);
   }
   Vectorized<c10::Half> sinh() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::sinh()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::sinh);
   }
   Vectorized<c10::Half> cos() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::cos()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::cos);
   }
   Vectorized<c10::Half> cosh() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::cosh()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::cosh);
   }
   Vectorized<c10::Half> ceil() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::ceil()" << std::endl;
     // This function is questionable with a conversion, so we use map
     return map(at::native::ceil_impl);
   }
   Vectorized<c10::Half> floor() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::floor()" << std::endl;
     // This function is questionable with a conversion, so we use map
     return map(at::native::floor_impl);
   }
   Vectorized<c10::Half> neg() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::neg()" << std::endl;
     return Vectorized<c10::Half>(
         vnegq_f16(values.val[0]), vnegq_f16(values.val[1]));
   }
   inline Vectorized<c10::Half> round() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::round()" << std::endl;
     // This function is questionable with a conversion, so we use map
     return map(at::native::round_impl);
   }
   inline Vectorized<c10::Half> tan() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::tan()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::tan);
   }
   inline Vectorized<c10::Half> tanh() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::tanh()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::tanh);
   }
   Vectorized<c10::Half> trunc() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::trunc()" << std::endl;
     float16x8_t r0 = vrndq_f16(values.val[0]);
     float16x8_t r1 = vrndq_f16(values.val[1]);
     return Vectorized<c10::Half>(r0, r1);
   }
   Vectorized<c10::Half> lgamma() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::lgamma()" << std::endl;
     return map_with_vec_float_method(&Vectorized<float>::lgamma);
   }
   Vectorized<c10::Half> sqrt() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::sqrt()" << std::endl;
     return Vectorized<c10::Half>(
         vsqrtq_f16(values.val[0]), vsqrtq_f16(values.val[1]));
   }
   Vectorized<c10::Half> reciprocal() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::reciprocal()" << std::endl;
     auto ones = vdupq_n_f16(1.0f);
     auto r0 = vdivq_f16(ones, values.val[0]);
     auto r1 = vdivq_f16(ones, values.val[1]);
     return Vectorized<c10::Half>(r0, r1);
   }
   Vectorized<c10::Half> rsqrt() const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::rsqrt()" << std::endl;
     return this->sqrt().reciprocal();
   }
   Vectorized<c10::Half> pow(const Vectorized<c10::Half>& exp) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::pow()" << std::endl;
     return map2_with_vec_float_method(exp, &Vectorized<float>::pow);
   }
   Vectorized<c10::Half> operator==(const Vectorized<c10::Half>& other) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::operator==()" << std::endl;
     float16x8_t r0 =
         vreinterpretq_f16_u16(vceqq_f16(values.val[0], other.values.val[0]));
     float16x8_t r1 =
@@ -564,6 +635,7 @@ class Vectorized<c10::Half> {
   }
 
   Vectorized<c10::Half> operator!=(const Vectorized<c10::Half>& other) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::operator!=()" << std::endl;
     float16x8_t r0 = vreinterpretq_f16_u16(
         vmvnq_u16(vceqq_f16(values.val[0], other.values.val[0])));
     float16x8_t r1 = vreinterpretq_f16_u16(
@@ -572,6 +644,7 @@ class Vectorized<c10::Half> {
   }
 
   Vectorized<c10::Half> operator<(const Vectorized<c10::Half>& other) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::operator<()" << std::endl;
     float16x8_t r0 =
         vreinterpretq_f16_u16(vcltq_f16(values.val[0], other.values.val[0]));
     float16x8_t r1 =
@@ -580,6 +653,7 @@ class Vectorized<c10::Half> {
   }
 
   Vectorized<c10::Half> operator<=(const Vectorized<c10::Half>& other) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::operator<=()" << std::endl;
     float16x8_t r0 =
         vreinterpretq_f16_u16(vcleq_f16(values.val[0], other.values.val[0]));
     float16x8_t r1 =
@@ -588,6 +662,7 @@ class Vectorized<c10::Half> {
   }
 
   Vectorized<c10::Half> operator>(const Vectorized<c10::Half>& other) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::operator>()" << std::endl;
     float16x8_t r0 =
         vreinterpretq_f16_u16(vcgtq_f16(values.val[0], other.values.val[0]));
     float16x8_t r1 =
@@ -596,6 +671,7 @@ class Vectorized<c10::Half> {
   }
 
   Vectorized<c10::Half> operator>=(const Vectorized<c10::Half>& other) const {
+    std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::operator>=()" << std::endl;
     float16x8_t r0 =
         vreinterpretq_f16_u16(vcgeq_f16(values.val[0], other.values.val[0]));
     float16x8_t r1 =
@@ -615,6 +691,7 @@ template <>
 Vectorized<c10::Half> inline operator+(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b) {
+  std::cout << "vec/vec256/vec256_half_neon.h/operator+<c10::Half>()" << std::endl;
   float16x8_t r0 = vaddq_f16(a.get_low(), b.get_low());
   float16x8_t r1 = vaddq_f16(a.get_high(), b.get_high());
   return Vectorized<c10::Half>(r0, r1);
@@ -624,6 +701,7 @@ template <>
 Vectorized<c10::Half> inline operator-(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b) {
+  std::cout << "vec/vec256/vec256_half_neon.h/operator-<c10::Half>()" << std::endl;
   float16x8_t r0 = vsubq_f16(a.get_low(), b.get_low());
   float16x8_t r1 = vsubq_f16(a.get_high(), b.get_high());
   return Vectorized<c10::Half>(r0, r1);
@@ -633,6 +711,7 @@ template <>
 Vectorized<c10::Half> inline operator*(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b) {
+  std::cout << "vec/vec256/vec256_half_neon.h/operator*<c10::Half>()" << std::endl;
   float16x8_t r0 = vmulq_f16(a.get_low(), b.get_low());
   float16x8_t r1 = vmulq_f16(a.get_high(), b.get_high());
   return Vectorized<c10::Half>(r0, r1);
@@ -642,6 +721,7 @@ template <>
 Vectorized<c10::Half> inline operator/(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b) {
+  std::cout << "vec/vec256/vec256_half_neon.h/operator/<c10::Half>()" << std::endl;
   float16x8_t r0 = vdivq_f16(a.get_low(), b.get_low());
   float16x8_t r1 = vdivq_f16(a.get_high(), b.get_high());
   return Vectorized<c10::Half>(r0, r1);
@@ -649,6 +729,7 @@ Vectorized<c10::Half> inline operator/(
 
 // frac. Implement this here so we can use subtraction
 inline Vectorized<c10::Half> Vectorized<c10::Half>::frac() const {
+  std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::frac()" << std::endl;
   return *this - this->trunc();
 }
 
@@ -658,6 +739,7 @@ template <>
 Vectorized<c10::Half> inline maximum(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b) {
+  std::cout << "vec/vec256/vec256_half_neon.h/maximum<c10::Half>()" << std::endl;
   float16x8_t r0 = vmaxq_f16(a.get_low(), b.get_low());
   float16x8_t r1 = vmaxq_f16(a.get_high(), b.get_high());
   return Vectorized<c10::Half>(r0, r1);
@@ -669,6 +751,7 @@ template <>
 Vectorized<c10::Half> inline minimum(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b) {
+  std::cout << "vec/vec256/vec256_half_neon.h/minimum<c10::Half>()" << std::endl;
   float16x8_t r0 = vminq_f16(a.get_low(), b.get_low());
   float16x8_t r1 = vminq_f16(a.get_high(), b.get_high());
   return Vectorized<c10::Half>(r0, r1);
@@ -679,6 +762,7 @@ Vectorized<c10::Half> inline clamp(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& min,
     const Vectorized<c10::Half>& max) {
+  std::cout << "vec/vec256/vec256_half_neon.h/clamp<c10::Half>()" << std::endl;
   return minimum(max, maximum(min, a));
 }
 
@@ -686,6 +770,7 @@ template <>
 Vectorized<c10::Half> inline clamp_max(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& max) {
+  std::cout << "vec/vec256/vec256_half_neon.h/clamp_max<c10::Half>()" << std::endl;
   return minimum(max, a);
 }
 
@@ -693,6 +778,7 @@ template <>
 Vectorized<c10::Half> inline clamp_min(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& min) {
+  std::cout << "vec/vec256/vec256_half_neon.h/clamp_min<c10::Half>()" << std::endl;
   return maximum(min, a);
 }
 
@@ -700,6 +786,7 @@ template <>
 Vectorized<c10::Half> inline operator&(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b) {
+  std::cout << "vec/vec256/vec256_half_neon.h/operator&<c10::Half>()" << std::endl;
   float16x8_t r0 = vreinterpretq_f16_u16(vandq_u16(
       vreinterpretq_u16_f16(a.get_low()), vreinterpretq_u16_f16(b.get_low())));
   float16x8_t r1 = vreinterpretq_f16_u16(vandq_u16(
@@ -712,6 +799,7 @@ template <>
 Vectorized<c10::Half> inline operator|(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b) {
+  std::cout << "vec/vec256/vec256_half_neon.h/operator|<c10::Half>()" << std::endl;
   float16x8_t r0 = vreinterpretq_f16_u16(vorrq_u16(
       vreinterpretq_u16_f16(a.get_low()), vreinterpretq_u16_f16(b.get_low())));
   float16x8_t r1 = vreinterpretq_f16_u16(vorrq_u16(
@@ -724,6 +812,7 @@ template <>
 Vectorized<c10::Half> inline operator^(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b) {
+  std::cout << "vec/vec256/vec256_half_neon.h/operator^<c10::Half>()" << std::endl;
   float16x8_t r0 = vreinterpretq_f16_u16(veorq_u16(
       vreinterpretq_u16_f16(a.get_low()), vreinterpretq_u16_f16(b.get_low())));
   float16x8_t r1 = vreinterpretq_f16_u16(veorq_u16(
@@ -734,36 +823,43 @@ Vectorized<c10::Half> inline operator^(
 
 inline Vectorized<c10::Half> Vectorized<c10::Half>::eq(
     const Vectorized<c10::Half>& other) const {
+  std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::eq()" << std::endl;
   return (*this == other) & Vectorized<c10::Half>(1);
 }
 
 inline Vectorized<c10::Half> Vectorized<c10::Half>::ne(
     const Vectorized<c10::Half>& other) const {
+  std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::ne()" << std::endl;
   return (*this != other) & Vectorized<c10::Half>(1);
 }
 
 inline Vectorized<c10::Half> Vectorized<c10::Half>::gt(
     const Vectorized<c10::Half>& other) const {
+  std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::gt()" << std::endl;
   return (*this > other) & Vectorized<c10::Half>(1);
 }
 
 inline Vectorized<c10::Half> Vectorized<c10::Half>::ge(
     const Vectorized<c10::Half>& other) const {
+  std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::ge()" << std::endl;
   return (*this >= other) & Vectorized<c10::Half>(1);
 }
 
 inline Vectorized<c10::Half> Vectorized<c10::Half>::lt(
     const Vectorized<c10::Half>& other) const {
+  std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::lt()" << std::endl;
   return (*this < other) & Vectorized<c10::Half>(1);
 }
 
 inline Vectorized<c10::Half> Vectorized<c10::Half>::le(
     const Vectorized<c10::Half>& other) const {
+  std::cout << "vec/vec256/vec256_half_neon.h/Vectorized<c10::Half>::le()" << std::endl;
   return (*this <= other) & Vectorized<c10::Half>(1);
 }
 
 template <>
 inline void convert(const float16_t* src, int16_t* dst, int64_t n) {
+  std::cout << "vec/vec256/vec256_half_neon.h/convert<float16_t, int16_t>()" << std::endl;
   int64_t i;
 #pragma unroll
   for (i = 0; i <= (n - Vectorized<c10::Half>::size());
@@ -779,6 +875,7 @@ inline void convert(const float16_t* src, int16_t* dst, int64_t n) {
 
 template <>
 inline void convert(const int16_t* src, float16_t* dst, int64_t n) {
+  std::cout << "vec/vec256/vec256_half_neon.h/convert<int16_t, float16_t>()" << std::endl;
   int64_t i;
 #pragma unroll
   for (i = 0; i <= (n - Vectorized<c10::Half>::size());
@@ -797,6 +894,7 @@ Vectorized<c10::Half> inline fmadd(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b,
     const Vectorized<c10::Half>& c) {
+  std::cout << "vec/vec256/vec256_half_neon.h/fmadd<c10::Half>()" << std::endl;
   float16x8_t r0 = vfmaq_f16(c.get_low(), a.get_low(), b.get_low());
   float16x8_t r1 = vfmaq_f16(c.get_high(), a.get_high(), b.get_high());
   return Vectorized<c10::Half>(r0, r1);
@@ -807,6 +905,7 @@ Vectorized<c10::Half> inline fmsub(
     const Vectorized<c10::Half>& a,
     const Vectorized<c10::Half>& b,
     const Vectorized<c10::Half>& c) {
+  std::cout << "vec/vec256/vec256_half_neon.h/fmsub<c10::Half>()" << std::endl;
   float16x8_t r0 = vfmsq_f16(c.get_low(), a.get_low(), b.get_low());
   float16x8_t r1 = vfmsq_f16(c.get_high(), a.get_high(), b.get_high());
   return Vectorized<c10::Half>(r0, r1);

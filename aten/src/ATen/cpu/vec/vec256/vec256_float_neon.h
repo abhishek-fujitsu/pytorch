@@ -6,6 +6,7 @@
 #include <ATen/cpu/vec/intrinsics.h>
 #include <ATen/cpu/vec/vec_base.h>
 #include <c10/util/irange.h>
+#include <iostream>
 
 #if defined(__aarch64__) && defined(AT_BUILD_ARM_VEC256_WITH_SLEEF)
 #include <sleef.h>
@@ -80,10 +81,12 @@ public:
          values{val0, val1, val2, val3, val4, val5, val6, val7} {}
   Vectorized(float32x4_t val0, float32x4_t val1) : values{val0, val1} {}
   operator float32x4x2_t() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/operator float32x4x2_t()" << std::endl;
     return values;
   }
   template <int64_t mask>
   static Vectorized<float> blend(const Vectorized<float>& a, const Vectorized<float>& b) {
+    std::cout << "vec/vec256/vec256_float_neon.h/blend()" << std::endl;
     Vectorized<float> vec;
     // 0.
     vec.values.val[0] =
@@ -115,6 +118,7 @@ public:
   }
   static Vectorized<float> blendv(const Vectorized<float>& a, const Vectorized<float>& b,
                               const Vectorized<float>& mask) {
+    std::cout << "vec/vec256/vec256_float_neon.h/blendv()" << std::endl;
     // TODO
     // NB: This requires that each value, i.e., each uint value,
     // of the mask either all be zeros or all be 1s.
@@ -133,6 +137,7 @@ public:
   }
   template<typename step_t>
   static Vectorized<float> arange(float base = 0.f, step_t step = static_cast<step_t>(1)) {
+    std::cout << "vec/vec256/vec256_float_neon.h/arange()" << std::endl;
     const Vectorized<float> base_vec(base);
     const Vectorized<float> step_vec(step);
     const Vectorized<float> step_sizes(0, 1, 2, 3, 4, 5, 6, 7);
@@ -140,6 +145,7 @@ public:
   }
   static Vectorized<float> set(const Vectorized<float>& a, const Vectorized<float>& b,
                            int64_t count = size()) {
+    std::cout << "vec/vec256/vec256_float_neon.h/set()" << std::endl;
     switch (count) {
       case 0:
         return a;
@@ -221,6 +227,7 @@ public:
     return b;
   }
   static Vectorized<float> loadu(const void* ptr, int64_t count = size()) {
+    std::cout << "vec/vec256/vec256_float_neon.h/loadu()" << std::endl;
     if (count == size()) {
       return vld1q_f32_x2(reinterpret_cast<const float*>(ptr));
     }
@@ -243,6 +250,7 @@ public:
     }
   }
   void store(void* ptr, int64_t count = size()) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/store()" << std::endl;
     if (count == size()) {
       vst1q_f32_x2(reinterpret_cast<float*>(ptr), values);
     }
@@ -256,15 +264,19 @@ public:
     }
   }
   inline const float32x4_t& get_low() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/get_low()" << std::endl;
     return values.val[0];
   }
   inline float32x4_t& get_low() {
+    std::cout << "vec/vec256/vec256_float_neon.h/get_low()" << std::endl;
     return values.val[0];
   }
   inline const float32x4_t& get_high() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/get_high()" << std::endl;
     return values.val[1];
   }
   inline float32x4_t& get_high() {
+    std::cout << "vec/vec256/vec256_float_neon.h/get_high()" << std::endl;
     return values.val[1];
   }
   // Very slow implementation of indexing.
@@ -272,11 +284,13 @@ public:
   // Once we specialize that implementation for ARM
   // this should be removed. TODO (kimishpatel)
   float operator[](int idx) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/operator[]" << std::endl;
     __at_align__ float tmp[size()];
     store(tmp);
     return tmp[idx];
   }
   float operator[](int idx) {
+    std::cout << "vec/vec256/vec256_float_neon.h/operator[]" << std::endl;
     __at_align__ float tmp[size()];
     store(tmp);
     return tmp[idx];
@@ -284,6 +298,7 @@ public:
   // For boolean version where we want to if any 1/all zero
   // etc. can be done faster in a different way.
   int zero_mask() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/zero_mask()" << std::endl;
     __at_align__ float tmp[size()];
     store(tmp);
     int mask = 0;
@@ -295,6 +310,7 @@ public:
     return mask;
   }
   Vectorized<float> isnan() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/isnan()" << std::endl;
     __at_align__ float tmp[size()];
     __at_align__ float res[size()];
     store(tmp);
@@ -308,6 +324,7 @@ public:
     return loadu(res);
   };
   bool has_inf_nan() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/has_inf_nan()" << std::endl;
     __at_align__ float tmp[size()];
     store(tmp);
     for (const auto i : c10::irange(size())) {
@@ -318,6 +335,7 @@ public:
     return false;
   }
   Vectorized<float> map(float (*const f)(float)) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/map()" << std::endl;
     __at_align__ float tmp[size()];
     store(tmp);
     for (const auto i : c10::irange(size())) {
@@ -326,54 +344,65 @@ public:
     return loadu(tmp);
   }
   Vectorized<float> abs() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/abs()" << std::endl;
     return Vectorized<float>(vabsq_f32(values.val[0]), vabsq_f32(values.val[1]));
   }
   Vectorized<float> angle() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/angle()" << std::endl;
     auto zero = Vectorized<float>(0);
     auto pi = Vectorized<float>(c10::pi<float>);
     auto tmp = blendv(zero, pi, *this < zero);
     return blendv(tmp, *this, isnan());
   }
   Vectorized<float> real() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/real()" << std::endl;
     return *this;
   }
   Vectorized<float> imag() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/imag()" << std::endl;
     return Vectorized<float>(0.f);
   }
   Vectorized<float> conj() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/conj()" << std::endl;
     return *this;
   }
   Vectorized<float> acos() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/acos()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_acosf4_u10(values.val[0]), Sleef_acosf4_u10(values.val[1])),
       map(std::acos)
     );
   }
   Vectorized<float> acosh() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/acosh()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_acoshf4_u10(values.val[0]), Sleef_acoshf4_u10(values.val[1])),
       map(std::acosh)
     );
   }
   Vectorized<float> asin() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/asin()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_asinf4_u10(values.val[0]), Sleef_asinf4_u10(values.val[1])),
       map(std::asin)
     );
   }
   Vectorized<float> atan() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/atan()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_atanf4_u10(values.val[0]), Sleef_atanf4_u10(values.val[1])),
       map(std::atan)
     );
   }
   Vectorized<float> atanh() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/atanh()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_atanhf4_u10(values.val[0]), Sleef_atanhf4_u10(values.val[1])),
       map(std::atanh)
     );
   }
   Vectorized<float> atan2(const Vectorized<float> &exp) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/atan2()" << std::endl;
     USE_SLEEF(
       {
         return Vectorized<float>(Sleef_atan2f4_u10(values.val[0], exp.values.val[0]),
@@ -392,6 +421,7 @@ public:
     )
   }
   Vectorized<float> copysign(const Vectorized<float> &sign) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/copysign()" << std::endl;
     USE_SLEEF(
       {
         return Vectorized<float>(Sleef_copysignf4(values.val[0], sign.values.val[0]),
@@ -411,36 +441,43 @@ public:
   }
   Vectorized<float> erf() const;
   Vectorized<float> erfc() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/erfc()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_erfcf4_u15(values.val[0]), Sleef_erfcf4_u15(values.val[1])),
       map(std::erfc)
     );
   }
   Vectorized<float> erfinv() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/erfinv()" << std::endl;
     return map(calc_erfinv);
   }
   Vectorized<float> exp() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/exp()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_expf4_u10(values.val[0]), Sleef_expf4_u10(values.val[1])),
       map(std::exp)
     );
   }
   Vectorized<float> exp2() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/exp2()" << std::endl;
     return USE_SLEEF(
         Vectorized<float>(Sleef_exp2f4_u10(values.val[0]), Sleef_exp2f4_u10(values.val[1])),
         map(std::exp2)
       );
   }
   Vectorized<float> expm1() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/expm1()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_expm1f4_u10(values.val[0]), Sleef_expm1f4_u10(values.val[1])),
       map(std::expm1)
     );
   }
   Vectorized<float> exp_u20() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/exp_u20()" << std::endl;
     return exp();
   }
   Vectorized<float> fmod(const Vectorized<float>& q) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/fmod()" << std::endl;
     USE_SLEEF(
       {
         return Vectorized<float>(Sleef_fmodf4(values.val[0], q.values.val[0]),
@@ -459,6 +496,7 @@ public:
     )
   }
   Vectorized<float> hypot(const Vectorized<float> &b) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/hypot()" << std::endl;
     USE_SLEEF(
       {
         return Vectorized<float>(Sleef_hypotf4_u05(values.val[0], b.values.val[0]),
@@ -477,15 +515,19 @@ public:
     )
   }
   Vectorized<float> i0() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/i0()" << std::endl;
     return map(calc_i0);
   }
   Vectorized<float> i0e() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/i0e()" << std::endl;
     return map(calc_i0e);
   }
   Vectorized<float> digamma() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/digamma()" << std::endl;
     return map(calc_digamma);
   }
   Vectorized<float> igamma(const Vectorized<float> &x) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/igamma()" << std::endl;
     __at_align__ float tmp[size()];
     __at_align__ float tmp_x[size()];
     store(tmp);
@@ -496,6 +538,7 @@ public:
     return loadu(tmp);
   }
   Vectorized<float> igammac(const Vectorized<float> &x) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/igammac()" << std::endl;
     __at_align__ float tmp[size()];
     __at_align__ float tmp_x[size()];
     store(tmp);
@@ -506,30 +549,35 @@ public:
     return loadu(tmp);
   }
   Vectorized<float> log() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/log()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_logf4_u10(values.val[0]), Sleef_logf4_u10(values.val[1])),
       map(std::log)
     );
   }
   Vectorized<float> log10() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/log10()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_log10f4_u10(values.val[0]), Sleef_log10f4_u10(values.val[1])),
       map(std::log10)
     );
   }
   Vectorized<float> log1p() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/log1p()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_log1pf4_u10(values.val[0]), Sleef_log1pf4_u10(values.val[1])),
       map(std::log1p)
     );
   }
   Vectorized<float> log2() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/log2()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_log2f4_u10(values.val[0]), Sleef_log2f4_u10(values.val[1])),
       map(std::log2)
     );
   }
   Vectorized<float> nextafter(const Vectorized<float> &b) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/nextafter()" << std::endl;
     USE_SLEEF(
       {
         return Vectorized<float>(Sleef_nextafterf4(values.val[0], b.values.val[0]),
@@ -549,81 +597,97 @@ public:
   }
   Vectorized<float> frac() const;
   Vectorized<float> sin() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/sin()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_sinf4_u10(values.val[0]), Sleef_sinf4_u10(values.val[1])),
       map(std::sin)
     );
   }
   Vectorized<float> sinh() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/sinh()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_sinhf4_u10(values.val[0]), Sleef_sinhf4_u10(values.val[1])),
       map(std::sinh)
     );
   }
   Vectorized<float> cos() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/cos()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_cosf4_u10(values.val[0]), Sleef_cosf4_u10(values.val[1])),
       map(std::cos)
     );
   }
   Vectorized<float> cosh() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/cosh()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_coshf4_u10(values.val[0]), Sleef_coshf4_u10(values.val[1])),
       map(std::cosh)
     );
   }
   Vectorized<float> ceil() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/ceil()" << std::endl;
     return map(at::native::ceil_impl);
   }
   Vectorized<float> floor() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/floor()" << std::endl;
     return map(at::native::floor_impl);
   }
   Vectorized<float> neg() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/neg()" << std::endl;
     return Vectorized<float>(
         vnegq_f32(values.val[0]),
         vnegq_f32(values.val[1]));
   }
   Vectorized<float> round() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/round()" << std::endl;
     // We do not use std::round because we would like to round midway numbers to the nearest even integer.
     return map(at::native::round_impl);
   }
   Vectorized<float> tan() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/tan()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_tanf4_u10(values.val[0]), Sleef_tanf4_u10(values.val[1])),
       map(std::tan)
     );
   }
   Vectorized<float> tanh() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/tanh()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_tanhf4_u10(values.val[0]), Sleef_tanhf4_u10(values.val[1])),
       map(std::tanh)
     );
   }
   Vectorized<float> trunc() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/trunc()" << std::endl;
     float32x4_t r0 = vrndq_f32(values.val[0]);
     float32x4_t r1 = vrndq_f32(values.val[1]);
     return Vectorized<float>(r0, r1);
   }
   Vectorized<float> lgamma() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/lgamma()" << std::endl;
     return USE_SLEEF(
       Vectorized<float>(Sleef_lgammaf4_u10(values.val[0]), Sleef_lgammaf4_u10(values.val[1])),
       map(std::lgamma)
     );
   }
   Vectorized<float> sqrt() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/sqrt()" << std::endl;
     return Vectorized<float>(
         vsqrtq_f32(values.val[0]),
         vsqrtq_f32(values.val[1]));
   }
   Vectorized<float> reciprocal() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/reciprocal()" << std::endl;
     auto r0 = vdivq_f32(vdupq_n_f32(1.0f), values.val[0]);
     auto r1 = vdivq_f32(vdupq_n_f32(1.0f), values.val[1]);
     return Vectorized<float>(r0, r1);
   }
   Vectorized<float> rsqrt() const {
+    std::cout << "vec/vec256/vec256_float_neon.h/rsqrt()" << std::endl;
     return this->sqrt().reciprocal();
   }
   Vectorized<float> pow(const Vectorized<float> &exp) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/pow()" << std::endl;
     USE_SLEEF(
       {
         return Vectorized<float>(Sleef_powf4_u10(values.val[0], exp.values.val[0]),
@@ -642,6 +706,7 @@ public:
     )
   }
   Vectorized<float> operator==(const Vectorized<float>& other) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/operator==()" << std::endl;
     float32x4_t r0 =
       vreinterpretq_f32_u32(vceqq_f32(values.val[0], other.values.val[0]));
     float32x4_t r1 =
@@ -650,6 +715,7 @@ public:
   }
 
   Vectorized<float> operator!=(const Vectorized<float>& other) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/operator!=()" << std::endl;
     float32x4_t r0 = vreinterpretq_f32_u32(
         vmvnq_u32(vceqq_f32(values.val[0], other.values.val[0])));
     float32x4_t r1 = vreinterpretq_f32_u32(
@@ -658,6 +724,7 @@ public:
   }
 
   Vectorized<float> operator<(const Vectorized<float>& other) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/operator<()" << std::endl;
     float32x4_t r0 =
       vreinterpretq_f32_u32(vcltq_f32(values.val[0], other.values.val[0]));
     float32x4_t r1 =
@@ -666,6 +733,7 @@ public:
   }
 
   Vectorized<float> operator<=(const Vectorized<float>& other) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/operator<=()" << std::endl;
     float32x4_t r0 =
       vreinterpretq_f32_u32(vcleq_f32(values.val[0], other.values.val[0]));
     float32x4_t r1 =
@@ -674,6 +742,7 @@ public:
   }
 
   Vectorized<float> operator>(const Vectorized<float>& other) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/operator>()" << std::endl;
     float32x4_t r0 =
       vreinterpretq_f32_u32(vcgtq_f32(values.val[0], other.values.val[0]));
     float32x4_t r1 =
@@ -682,6 +751,7 @@ public:
   }
 
   Vectorized<float> operator>=(const Vectorized<float>& other) const {
+    std::cout << "vec/vec256/vec256_float_neon.h/operator>=()" << std::endl;
     float32x4_t r0 =
       vreinterpretq_f32_u32(vcgeq_f32(values.val[0], other.values.val[0]));
     float32x4_t r1 =
@@ -699,6 +769,7 @@ public:
 
 template <>
 Vectorized<float> inline operator+(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256_float_neon.h/operator+()" << std::endl;
   float32x4_t r0 = vaddq_f32(a.get_low(), b.get_low());
   float32x4_t r1 = vaddq_f32(a.get_high(), b.get_high());
   return Vectorized<float>(r0, r1);
@@ -706,6 +777,7 @@ Vectorized<float> inline operator+(const Vectorized<float>& a, const Vectorized<
 
 template <>
 Vectorized<float> inline operator-(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256_float_neon.h/operator-()" << std::endl;
   float32x4_t r0 = vsubq_f32(a.get_low(), b.get_low());
   float32x4_t r1 = vsubq_f32(a.get_high(), b.get_high());
   return Vectorized<float>(r0, r1);
@@ -713,6 +785,7 @@ Vectorized<float> inline operator-(const Vectorized<float>& a, const Vectorized<
 
 template <>
 Vectorized<float> inline operator*(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256_float_neon.h/operator*()" << std::endl;
   float32x4_t r0 = vmulq_f32(a.get_low(), b.get_low());
   float32x4_t r1 = vmulq_f32(a.get_high(), b.get_high());
   return Vectorized<float>(r0, r1);
@@ -720,6 +793,7 @@ Vectorized<float> inline operator*(const Vectorized<float>& a, const Vectorized<
 
 template <>
 Vectorized<float> inline operator/(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256_float_neon.h/operator/()" << std::endl;
   float32x4_t r0 = vdivq_f32(a.get_low(), b.get_low());
   float32x4_t r1 = vdivq_f32(a.get_high(), b.get_high());
   return Vectorized<float>(r0, r1);
@@ -727,6 +801,7 @@ Vectorized<float> inline operator/(const Vectorized<float>& a, const Vectorized<
 
 // frac. Implement this here so we can use subtraction
 inline Vectorized<float> Vectorized<float>::frac() const {
+  std::cout << "vec/vec256/vec256_float_neon.h/frac()" << std::endl;
   return *this - this->trunc();
 }
 
@@ -734,6 +809,7 @@ inline Vectorized<float> Vectorized<float>::frac() const {
 // either input is a NaN.
 template <>
 Vectorized<float> inline maximum(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256_float_neon.h/maximum()" << std::endl;
   float32x4_t r0 = vmaxq_f32(a.get_low(), b.get_low());
   float32x4_t r1 = vmaxq_f32(a.get_high(), b.get_high());
   return Vectorized<float>(r0, r1);
@@ -743,6 +819,7 @@ Vectorized<float> inline maximum(const Vectorized<float>& a, const Vectorized<fl
 // either input is a NaN.
 template <>
 Vectorized<float> inline minimum(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256_float_neon.h/minimum()" << std::endl;
   float32x4_t r0 = vminq_f32(a.get_low(), b.get_low());
   float32x4_t r1 = vminq_f32(a.get_high(), b.get_high());
   return Vectorized<float>(r0, r1);
@@ -750,21 +827,25 @@ Vectorized<float> inline minimum(const Vectorized<float>& a, const Vectorized<fl
 
 template <>
 Vectorized<float> inline clamp(const Vectorized<float>& a, const Vectorized<float>& min, const Vectorized<float>& max) {
+  std::cout << "vec/vec256/vec256_float_neon.h/clamp()" << std::endl;
   return minimum(max, maximum(min, a));
 }
 
 template <>
 Vectorized<float> inline clamp_max(const Vectorized<float>& a, const Vectorized<float>& max) {
+  std::cout << "vec/vec256/vec256_float_neon.h/clamp_max()" << std::endl;
   return minimum(max, a);
 }
 
 template <>
 Vectorized<float> inline clamp_min(const Vectorized<float>& a, const Vectorized<float>& min) {
+  std::cout << "vec/vec256/vec256_float_neon.h/clamp_min()" << std::endl;
   return maximum(min, a);
 }
 
 template <>
 Vectorized<float> inline operator&(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256_float_neon.h/operator&()" << std::endl;
   float32x4_t r0 = vreinterpretq_f32_u32(vandq_u32(
       vreinterpretq_u32_f32(a.get_low()),
       vreinterpretq_u32_f32(b.get_low())));
@@ -776,6 +857,7 @@ Vectorized<float> inline operator&(const Vectorized<float>& a, const Vectorized<
 
 template <>
 Vectorized<float> inline operator|(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256_float_neon.h/operator|()" << std::endl;
   float32x4_t r0 = vreinterpretq_f32_u32(vorrq_u32(
       vreinterpretq_u32_f32(a.get_low()),
       vreinterpretq_u32_f32(b.get_low())));
@@ -787,6 +869,7 @@ Vectorized<float> inline operator|(const Vectorized<float>& a, const Vectorized<
 
 template <>
 Vectorized<float> inline operator^(const Vectorized<float>& a, const Vectorized<float>& b) {
+  std::cout << "vec/vec256/vec256_float_neon.h/operator^()" << std::endl;
   float32x4_t r0 = vreinterpretq_f32_u32(veorq_u32(
       vreinterpretq_u32_f32(a.get_low()),
       vreinterpretq_u32_f32(b.get_low())));
@@ -797,31 +880,38 @@ Vectorized<float> inline operator^(const Vectorized<float>& a, const Vectorized<
 }
 
 inline Vectorized<float> Vectorized<float>::eq(const Vectorized<float>& other) const {
+  std::cout << "vec/vec256/vec256_float_neon.h/eq()" << std::endl;
   return (*this == other) & Vectorized<float>(1.0f);
 }
 
 inline Vectorized<float> Vectorized<float>::ne(const Vectorized<float>& other) const {
+  std::cout << "vec/vec256/vec256_float_neon.h/ne()" << std::endl;
   return (*this != other) & Vectorized<float>(1.0f);
 }
 
 inline Vectorized<float> Vectorized<float>::gt(const Vectorized<float>& other) const {
+  std::cout << "vec/vec256/vec256_float_neon.h/gt()" << std::endl;
   return (*this > other) & Vectorized<float>(1.0f);
 }
 
 inline Vectorized<float> Vectorized<float>::ge(const Vectorized<float>& other) const {
+  std::cout << "vec/vec256/vec256_float_neon.h/ge()" << std::endl;
   return (*this >= other) & Vectorized<float>(1.0f);
 }
 
 inline Vectorized<float> Vectorized<float>::lt(const Vectorized<float>& other) const {
+  std::cout << "vec/vec256/vec256_float_neon.h/lt()" << std::endl;
   return (*this < other) & Vectorized<float>(1.0f);
 }
 
 inline Vectorized<float> Vectorized<float>::le(const Vectorized<float>& other) const {
+  std::cout << "vec/vec256/vec256_float_neon.h/le()" << std::endl;
   return (*this <= other) & Vectorized<float>(1.0f);
 }
 
 template <>
 inline void convert(const float* src, int32_t* dst, int64_t n) {
+  std::cout << "vec/vec256/vec256_float_neon.h/convert<float, int32_t>()" << std::endl;
   int64_t i;
 #pragma unroll
   for (i = 0; i <= (n - Vectorized<float>::size()); i += Vectorized<float>::size()) {
@@ -836,6 +926,7 @@ inline void convert(const float* src, int32_t* dst, int64_t n) {
 
 template <>
 inline void convert(const int32_t* src, float* dst, int64_t n) {
+  std::cout << "vec/vec256/vec256_float_neon.h/convert<int32_t, float>()" << std::endl;
   int64_t i;
 #pragma unroll
   for (i = 0; i <= (n - Vectorized<float>::size()); i += Vectorized<float>::size()) {
@@ -850,6 +941,7 @@ inline void convert(const int32_t* src, float* dst, int64_t n) {
 
 template <>
 Vectorized<float> inline fmadd(const Vectorized<float>& a, const Vectorized<float>& b, const Vectorized<float>& c) {
+  std::cout << "vec/vec256/vec256_float_neon.h/fmadd()" << std::endl;
   float32x4_t r0 = vfmaq_f32(c.get_low(), a.get_low(), b.get_low());
   float32x4_t r1 = vfmaq_f32(c.get_high(), a.get_high(), b.get_high());
   return Vectorized<float>(r0, r1);
@@ -857,12 +949,14 @@ Vectorized<float> inline fmadd(const Vectorized<float>& a, const Vectorized<floa
 
 template <>
 Vectorized<float> inline fmsub(const Vectorized<float>& a, const Vectorized<float>& b, const Vectorized<float>& c) {
+  std::cout << "vec/vec256/vec256_float_neon.h/fmsub()" << std::endl;
   float32x4_t r0 = vfmsq_f32(c.get_low(), a.get_low(), b.get_low());
   float32x4_t r1 = vfmsq_f32(c.get_high(), a.get_high(), b.get_high());
   return Vectorized<float>(r0, r1);
 }
 
 inline Vectorized<float> Vectorized<float>::erf() const{
+  std::cout << "vec/vec256/vec256_float_neon.h/erf()" << std::endl;
     // constants
     const Vectorized<float> neg_zero_vec(-0.f);
     const Vectorized<float> one_vec(1.0f);

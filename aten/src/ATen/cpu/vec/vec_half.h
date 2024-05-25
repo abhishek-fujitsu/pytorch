@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ATen/cpu/vec/intrinsics.h>
+#include <iostream>
 
 namespace at::vec {
 // See Note [CPU_CAPABILITY namespace]
@@ -9,6 +10,7 @@ inline namespace CPU_CAPABILITY {
 #if (defined(CPU_CAPABILITY_AVX2) || defined(CPU_CAPABILITY_AVX512)) && \
     !defined(__APPLE__)
 static inline uint16_t float2half_scalar(float val) {
+  std::cout << "vec/vec_half.h/float2half_scalar()" << std::endl;
 #if defined(CPU_CAPABILITY_AVX2)
 #if defined(_MSC_VER)
   __m256 v = _mm256_set1_ps(val);
@@ -28,6 +30,7 @@ static inline uint16_t float2half_scalar(float val) {
 }
 
 static inline float half2float_scalar(uint16_t val) {
+  std::cout << "vec/vec_half.h/half2float_scalar()" << std::endl;
 #if defined(CPU_CAPABILITY_AVX2)
 #if defined(_MSC_VER)
   __m128i v = _mm_cvtsi32_si128(val);
