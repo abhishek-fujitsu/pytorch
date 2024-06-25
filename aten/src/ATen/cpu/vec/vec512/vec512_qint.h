@@ -911,7 +911,8 @@ Vectorized<c10::quint8> inline maximum(const Vectorized<c10::quint8>& a, const V
   return a.maximum(b);
 }
 
-#else
+// #else
+#elif !defined(CPU_CAPABILITY_SVE512)
 
 // NOTE: These are low-performance implementations that we fall back on.
 
