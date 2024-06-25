@@ -79,3 +79,34 @@ if(NOT CORTEXA9_FOUND)
       MESSAGE(STATUS "No OMAP4 processor on this machine.")
 endif(NOT CORTEXA9_FOUND)
 mark_as_advanced(NEON_FOUND)
+
+include(CheckCXXCompilerFlag)
+
+check_cxx_compiler_flag("-march=armv8-a+sve -msve-vector-bits=256" COMPILER_HAS_ARM_SVE256)
+check_cxx_compiler_flag("-march=armv8-a+sve -msve-vector-bits=512" COMPILER_HAS_ARM_SVE512)
+
+set(COMPILER_HAS_ARM_SVE FALSE)
+if(COMPILER_HAS_ARM_SVE256 OR COMPILER_HAS_ARM_SVE512)
+  set(COMPILER_HAS_ARM_SVE TRUE)
+endif()
+
+if(COMPILER_HAS_ARM_SVE256)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCOMPILER_HAS_ARM_SVE256")
+endif()
+
+if(COMPILER_HAS_ARM_SVE512)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCOMPILER_HAS_ARM_SVE512")
+endif()
+
+# Print status messages
+if(COMPILER_HAS_ARM_SVE)
+  message(STATUS "SVE support detected.")
+  if(COMPILER_HAS_ARM_SVE256)
+    message(STATUS "SVE256 support detected.")
+  endif()
+  if(COMPILER_HAS_ARM_SVE512)
+    message(STATUS "SVE512 support detected.")
+  endif()
+else()
+  message(STATUS "No SVE support detected.")
+endif()
