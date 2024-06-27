@@ -38,6 +38,11 @@ static CPUCapability compute_cpu_capability() {
       return CPUCapability::ZVECTOR;
     }
 #elif defined(HAVE_SVE_CPU_DEFINITION)
+#ifdef HAVE_SVE128_CPU_DEFINITION
+    if (strcmp(envar, "sve128") == 0) {
+      return CPUCapability::SVE128;
+    }
+#endif
 #ifdef HAVE_SVE256_CPU_DEFINITION
     if (strcmp(envar, "sve256") == 0) {
       return CPUCapability::SVE256;
@@ -115,6 +120,11 @@ static CPUCapability compute_cpu_capability() {
       cached_sve_vl = vl; // Update the cache
     }
     if (cached_sve_vl != -1) {
+      #ifdef HAVE_SVE128_CPU_DEFINITION
+        if (cached_sve_vl == 16) { // Check for SVE128 (16 bytes vector length)
+          return CPUCapability::SVE128;
+        }
+      #endif
       #ifdef HAVE_SVE256_CPU_DEFINITION
         if (cached_sve_vl == 32) { // Check for SVE256 (32 bytes vector length)
           return CPUCapability::SVE256;
@@ -155,6 +165,9 @@ DispatchResult DispatchStubImpl::try_get_call_ptr(
 #ifdef HAVE_ZVECTOR_CPU_DEFINITION
   , void *ZVECTOR
 #endif
+#ifdef HAVE_SVE128_CPU_DEFINITION
+  , void *SVE128
+#endif
 #ifdef HAVE_SVE256_CPU_DEFINITION
   , void *SVE256
 #endif
@@ -192,6 +205,9 @@ DispatchResult DispatchStubImpl::try_get_call_ptr(
 #endif
 #ifdef HAVE_ZVECTOR_CPU_DEFINITION
           , ZVECTOR
+#endif
+#ifdef HAVE_SVE128_CPU_DEFINITION
+          , SVE128
 #endif
 #ifdef HAVE_SVE256_CPU_DEFINITION
           , SVE256
@@ -243,6 +259,9 @@ void* DispatchStubImpl::get_call_ptr(
 #ifdef HAVE_ZVECTOR_CPU_DEFINITION
   , void *ZVECTOR
 #endif
+#ifdef HAVE_SVE128_CPU_DEFINITION
+  , void *SVE128
+#endif
 #ifdef HAVE_SVE256_CPU_DEFINITION
   , void *SVE256
 #endif
@@ -269,6 +288,10 @@ void* DispatchStubImpl::get_call_ptr(
 #ifdef HAVE_ZVECTOR_CPU_DEFINITION
       ,
       ZVECTOR
+#endif
+#ifdef HAVE_SVE128_CPU_DEFINITION
+      ,
+      SVE128
 #endif
 #ifdef HAVE_SVE256_CPU_DEFINITION
       ,
@@ -309,6 +332,9 @@ DispatchResult DispatchStubImpl::try_choose_cpu_impl(
 #ifdef HAVE_ZVECTOR_CPU_DEFINITION
     , void *ZVECTOR
 #endif
+#ifdef HAVE_SVE128_CPU_DEFINITION
+    , void *SVE128
+#endif
 #ifdef HAVE_SVE256_CPU_DEFINITION
     , void *SVE256
 #endif
@@ -345,6 +371,17 @@ DispatchResult DispatchStubImpl::try_choose_cpu_impl(
 #ifdef HAVE_ZVECTOR_CPU_DEFINITION
   if (capability >= static_cast<int>(CPUCapability::ZVECTOR)) {
     return ZVECTOR != nullptr ? DispatchResult(ZVECTOR) : ErrorType::MissingDeviceKernel;
+  }
+#endif
+#ifdef HAVE_SVE128_CPU_DEFINITION
+  if (capability >= static_cast<int>(CPUCapability::SVE128)) {
+    if (C10_UNLIKELY(!SVE128)) {
+      // dispatch to DEFAULT, since the SVE kernel is missing
+      TORCH_INTERNAL_ASSERT(DEFAULT, "DispatchStub: missing default kernel");
+      return DEFAULT;
+    } else {
+      return SVE128;
+    }
   }
 #endif
 #ifdef HAVE_SVE256_CPU_DEFINITION
@@ -386,6 +423,9 @@ void* DispatchStubImpl::choose_cpu_impl(
 #ifdef HAVE_ZVECTOR_CPU_DEFINITION
   , void *ZVECTOR
 #endif
+#ifdef HAVE_SVE128_CPU_DEFINITION
+  , void *SVE128
+#endif
 #ifdef HAVE_SVE256_CPU_DEFINITION
   , void *SVE256
 #endif
@@ -425,6 +465,17 @@ void* DispatchStubImpl::choose_cpu_impl(
   if (capability >= static_cast<int>(CPUCapability::ZVECTOR)) {
     TORCH_INTERNAL_ASSERT(ZVECTOR, "DispatchStub: missing ZVECTOR kernel");
     return ZVECTOR;
+  }
+#endif
+#ifdef HAVE_SVE128_CPU_DEFINITION
+  if (capability >= static_cast<int>(CPUCapability::SVE128)) {
+    if (C10_UNLIKELY(!SVE128)) {
+      // dispatch to DEFAULT, since the SVE kernel is missing
+      TORCH_INTERNAL_ASSERT(DEFAULT, "DispatchStub: missing default kernel");
+      return DEFAULT;
+    } else {
+      return SVE128;
+    }
   }
 #endif
 #ifdef HAVE_SVE256_CPU_DEFINITION
