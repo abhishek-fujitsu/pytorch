@@ -1140,6 +1140,7 @@ REGISTER_AVX512_DISPATCH(cholesky_stub, &cholesky_kernel);
 REGISTER_AVX2_DISPATCH(cholesky_stub, &cholesky_kernel);
 REGISTER_VSX_DISPATCH(cholesky_stub, &cholesky_kernel);
 REGISTER_ZVECTOR_DISPATCH(cholesky_stub, &cholesky_kernel);
+REGISTER_SVE128_DISPATCH(cholesky_stub, &cholesky_kernel);
 REGISTER_SVE256_DISPATCH(cholesky_stub, &cholesky_kernel);
 REGISTER_SVE512_DISPATCH(cholesky_stub, &cholesky_kernel);
 
@@ -1148,6 +1149,7 @@ REGISTER_AVX512_DISPATCH(cholesky_inverse_stub, &cholesky_inverse_kernel_impl);
 REGISTER_AVX2_DISPATCH(cholesky_inverse_stub, &cholesky_inverse_kernel_impl);
 REGISTER_VSX_DISPATCH(cholesky_inverse_stub, &cholesky_inverse_kernel_impl);
 REGISTER_ZVECTOR_DISPATCH(cholesky_inverse_stub, &cholesky_inverse_kernel_impl);
+REGISTER_SVE128_DISPATCH(cholesky_inverse_stub, &cholesky_inverse_kernel_impl);
 REGISTER_SVE256_DISPATCH(cholesky_inverse_stub, &cholesky_inverse_kernel_impl);
 REGISTER_SVE512_DISPATCH(cholesky_inverse_stub, &cholesky_inverse_kernel_impl);
 
@@ -1156,6 +1158,7 @@ REGISTER_AVX512_DISPATCH(linalg_eig_stub, &linalg_eig_kernel);
 REGISTER_AVX2_DISPATCH(linalg_eig_stub, &linalg_eig_kernel);
 REGISTER_VSX_DISPATCH(linalg_eig_stub, &linalg_eig_kernel);
 REGISTER_ZVECTOR_DISPATCH(linalg_eig_stub, &linalg_eig_kernel);
+REGISTER_SVE128_DISPATCH(linalg_eig_stub, &linalg_eig_kernel);
 REGISTER_SVE256_DISPATCH(linalg_eig_stub, &linalg_eig_kernel);
 REGISTER_SVE512_DISPATCH(linalg_eig_stub, &linalg_eig_kernel);
 
@@ -1164,6 +1167,7 @@ REGISTER_AVX512_DISPATCH(linalg_eigh_stub, &linalg_eigh_kernel);
 REGISTER_AVX2_DISPATCH(linalg_eigh_stub, &linalg_eigh_kernel);
 REGISTER_VSX_DISPATCH(linalg_eigh_stub, &linalg_eigh_kernel);
 REGISTER_ZVECTOR_DISPATCH(linalg_eigh_stub, &linalg_eigh_kernel);
+REGISTER_SVE128_DISPATCH(linalg_eigh_stub, &linalg_eigh_kernel);
 REGISTER_SVE256_DISPATCH(linalg_eigh_stub, &linalg_eigh_kernel);
 REGISTER_SVE512_DISPATCH(linalg_eigh_stub, &linalg_eigh_kernel);
 
@@ -1172,6 +1176,7 @@ REGISTER_AVX512_DISPATCH(geqrf_stub, &geqrf_kernel);
 REGISTER_AVX2_DISPATCH(geqrf_stub, &geqrf_kernel);
 REGISTER_VSX_DISPATCH(geqrf_stub, &geqrf_kernel);
 REGISTER_ZVECTOR_DISPATCH(geqrf_stub, &geqrf_kernel);
+REGISTER_SVE128_DISPATCH(geqrf_stub, &geqrf_kernel);
 REGISTER_SVE256_DISPATCH(geqrf_stub, &geqrf_kernel);
 REGISTER_SVE512_DISPATCH(geqrf_stub, &geqrf_kernel);
 
@@ -1180,6 +1185,7 @@ REGISTER_AVX512_DISPATCH(orgqr_stub, &orgqr_kernel_impl);
 REGISTER_AVX2_DISPATCH(orgqr_stub, &orgqr_kernel_impl);
 REGISTER_VSX_DISPATCH(orgqr_stub, &orgqr_kernel_impl);
 REGISTER_ZVECTOR_DISPATCH(orgqr_stub, &orgqr_kernel_impl);
+REGISTER_SVE128_DISPATCH(orgqr_stub, &orgqr_kernel_impl);
 REGISTER_SVE256_DISPATCH(orgqr_stub, &orgqr_kernel_impl);
 REGISTER_SVE512_DISPATCH(orgqr_stub, &orgqr_kernel_impl);
 
@@ -1188,6 +1194,7 @@ REGISTER_AVX512_DISPATCH(ormqr_stub, &ormqr_kernel);
 REGISTER_AVX2_DISPATCH(ormqr_stub, &ormqr_kernel);
 REGISTER_VSX_DISPATCH(ormqr_stub, &ormqr_kernel);
 REGISTER_ZVECTOR_DISPATCH(ormqr_stub, &ormqr_kernel);
+REGISTER_SVE128_DISPATCH(ormqr_stub, &ormqr_kernel);
 REGISTER_SVE256_DISPATCH(ormqr_stub, &ormqr_kernel);
 REGISTER_SVE512_DISPATCH(ormqr_stub, &ormqr_kernel);
 
@@ -1196,6 +1203,7 @@ REGISTER_AVX512_DISPATCH(lstsq_stub, &lstsq_kernel);
 REGISTER_AVX2_DISPATCH(lstsq_stub, &lstsq_kernel);
 REGISTER_VSX_DISPATCH(lstsq_stub, &lstsq_kernel);
 REGISTER_ZVECTOR_DISPATCH(lstsq_stub, &lstsq_kernel);
+REGISTER_SVE128_DISPATCH(lstsq_stub, &lstsq_kernel);
 REGISTER_SVE256_DISPATCH(lstsq_stub, &lstsq_kernel);
 REGISTER_SVE512_DISPATCH(lstsq_stub, &lstsq_kernel);
 
@@ -1204,6 +1212,7 @@ REGISTER_AVX512_DISPATCH(triangular_solve_stub, &triangular_solve_kernel);
 REGISTER_AVX2_DISPATCH(triangular_solve_stub, &triangular_solve_kernel);
 REGISTER_VSX_DISPATCH(triangular_solve_stub, &triangular_solve_kernel);
 REGISTER_ZVECTOR_DISPATCH(triangular_solve_stub, &triangular_solve_kernel);
+REGISTER_SVE128_DISPATCH(triangular_solve_stub, &triangular_solve_kernel);
 REGISTER_SVE256_DISPATCH(triangular_solve_stub, &triangular_solve_kernel);
 REGISTER_SVE512_DISPATCH(triangular_solve_stub, &triangular_solve_kernel);
 
@@ -1212,6 +1221,7 @@ REGISTER_AVX512_DISPATCH(lu_factor_stub, &lu_factor_kernel);
 REGISTER_AVX2_DISPATCH(lu_factor_stub, &lu_factor_kernel);
 REGISTER_VSX_DISPATCH(lu_factor_stub, &lu_factor_kernel);
 REGISTER_ZVECTOR_DISPATCH(lu_factor_stub, &lu_factor_kernel);
+REGISTER_SVE128_DISPATCH(lu_factor_stub, &lu_factor_kernel);
 REGISTER_SVE256_DISPATCH(lu_factor_stub, &lu_factor_kernel);
 REGISTER_SVE512_DISPATCH(lu_factor_stub, &lu_factor_kernel);
 
@@ -1220,6 +1230,7 @@ REGISTER_AVX512_DISPATCH(ldl_factor_stub, &ldl_factor_kernel);
 REGISTER_AVX2_DISPATCH(ldl_factor_stub, &ldl_factor_kernel);
 REGISTER_VSX_DISPATCH(ldl_factor_stub, &ldl_factor_kernel);
 REGISTER_ZVECTOR_DISPATCH(ldl_factor_stub, &ldl_factor_kernel);
+REGISTER_SVE128_DISPATCH(ldl_factor_stub, &ldl_factor_kernel);
 REGISTER_SVE256_DISPATCH(ldl_factor_stub, &ldl_factor_kernel);
 REGISTER_SVE512_DISPATCH(ldl_factor_stub, &ldl_factor_kernel);
 
@@ -1228,6 +1239,7 @@ REGISTER_AVX512_DISPATCH(ldl_solve_stub, &ldl_solve_kernel);
 REGISTER_AVX2_DISPATCH(ldl_solve_stub, &ldl_solve_kernel);
 REGISTER_VSX_DISPATCH(ldl_solve_stub, &ldl_solve_kernel);
 REGISTER_ZVECTOR_DISPATCH(ldl_solve_stub, &ldl_solve_kernel);
+REGISTER_SVE128_DISPATCH(ldl_solve_stub, &ldl_solve_kernel);
 REGISTER_SVE256_DISPATCH(ldl_solve_stub, &ldl_solve_kernel);
 REGISTER_SVE512_DISPATCH(ldl_solve_stub, &ldl_solve_kernel);
 
@@ -1236,6 +1248,7 @@ REGISTER_AVX512_DISPATCH(lu_solve_stub, &lu_solve_kernel);
 REGISTER_AVX2_DISPATCH(lu_solve_stub, &lu_solve_kernel);
 REGISTER_VSX_DISPATCH(lu_solve_stub, &lu_solve_kernel);
 REGISTER_ZVECTOR_DISPATCH(lu_solve_stub, &lu_solve_kernel);
+REGISTER_SVE128_DISPATCH(lu_solve_stub, &lu_solve_kernel);
 REGISTER_SVE256_DISPATCH(lu_solve_stub, &lu_solve_kernel);
 REGISTER_SVE512_DISPATCH(lu_solve_stub, &lu_solve_kernel);
 
@@ -1244,6 +1257,7 @@ REGISTER_AVX512_DISPATCH(svd_stub, &svd_kernel);
 REGISTER_AVX2_DISPATCH(svd_stub, &svd_kernel);
 REGISTER_VSX_DISPATCH(svd_stub, &svd_kernel);
 REGISTER_ZVECTOR_DISPATCH(svd_stub, &svd_kernel);
+REGISTER_SVE128_DISPATCH(svd_stub, &svd_kernel);
 REGISTER_SVE256_DISPATCH(svd_stub, &svd_kernel);
 REGISTER_SVE512_DISPATCH(svd_stub, &svd_kernel);
 
@@ -1252,6 +1266,7 @@ REGISTER_AVX512_DISPATCH(unpack_pivots_stub, &unpack_pivots_cpu_kernel);
 REGISTER_AVX2_DISPATCH(unpack_pivots_stub, &unpack_pivots_cpu_kernel);
 REGISTER_VSX_DISPATCH(unpack_pivots_stub, &unpack_pivots_cpu_kernel);
 REGISTER_ZVECTOR_DISPATCH(unpack_pivots_stub, &unpack_pivots_cpu_kernel);
+REGISTER_SVE128_DISPATCH(unpack_pivots_stub, &unpack_pivots_cpu_kernel);
 REGISTER_SVE256_DISPATCH(unpack_pivots_stub, &unpack_pivots_cpu_kernel);
 REGISTER_SVE512_DISPATCH(unpack_pivots_stub, &unpack_pivots_cpu_kernel);
 } // namespace at::native
