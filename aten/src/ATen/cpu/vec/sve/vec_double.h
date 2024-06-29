@@ -3,12 +3,12 @@
 #include <ATen/cpu/vec/intrinsics.h>
 #include <ATen/cpu/vec/vec_base.h>
 #include <ATen/cpu/vec/sve/sve_helper.h>
+#include <c10/util/irange.h>
 #if defined(CPU_CAPABILITY_SVE)
 #include <sleef.h>
 #endif
 
-namespace at {
-namespace vec {
+namespace at::vec {
 // Note [CPU_CAPABILITY namespace]
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // This header, and all of its subheaders, will be compiled with
@@ -431,4 +431,4 @@ Vectorized<double> inline fmadd(const Vectorized<double>& a, const Vectorized<do
 
 #endif // defined(CPU_CAPABILITY_SVE)
 
-}}}
+}}
